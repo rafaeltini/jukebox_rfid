@@ -1,0 +1,12 @@
+[Unit]
+Description=Jukebox RFID Web Server
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/python3 /home/pi/jukebox_rfid/app/main.py
+WorkingDirectory=/home/pi/jukebox_rfid/app
+Restart=always
+User=pi
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Jukebox RFID</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <h1>🎶 Jukebox RFID</h1>
+    <button onclick="send('play')">Play</button>
+    <button onclick="send('pause')">Pause</button>
+    <input type="range" min="0" max="100" value="50" onchange="setVolume(this.value)">
+    <script>
+        function send(action) {
+            fetch(`/api/${action}`, { method: 'POST' });
+        }
+        function setVolume(level) {
+            fetch(`/api/volume?level=${level}`, { method: 'POST' });
+        }
+    </script>
+</body>
+</html>
