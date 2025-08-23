@@ -120,7 +120,7 @@
                 } else {
                     ui.uploadStatus.textContent = `❌ ` + (translations[currentLang]?.upload_status_error || 'Upload error.');
                 }
-                setTimeout(api.getStatus, 1500).then(updatePlayerUI);
+                setTimeout(() => { api.getStatus().then(updatePlayerUI); }, 1500);
             }).catch(err => {
                 ui.uploadStatus.textContent = '❌ ' + (translations[currentLang]?.upload_status_error || 'Upload error.');
                 console.error(err);
