@@ -43,18 +43,60 @@ Conecte o leitor ao Raspberry Pi usando os seguintes pinos GPIO:
 #### Nota sobre o Waveshare HiFi HAT
 Este projeto usa o `pygame.mixer` para controlar o áudio, que por sua vez usa o sistema ALSA no Linux. O controle de volume na interface web **não** usa `amixer` e deve funcionar com qualquer dispositivo de saída padrão. Se você precisar de controle de volume via linha de comando, pode precisar identificar o nome do controle do seu HAT com o comando `amixer` e ajustar os scripts conforme necessário.
 
-### 🚀 Instalação de Software
+### 🚀 Guia de Instalação Completo
 
-1.  Clone o repositório no seu Raspberry Pi:
+Siga estes passos para configurar sua Jukebox do zero.
+
+#### Passo 1: Preparando o Raspberry Pi
+
+1.  **Instale o Raspberry Pi OS:** Use o [Raspberry Pi Imager](https://www.raspberrypi.com/software/) para instalar a versão mais recente do Raspberry Pi OS em um cartão SD.
+2.  **Primeiro Boot e Configuração:** Inicie seu Raspberry Pi, conecte-o à sua rede Wi-Fi e conclua a configuração inicial.
+3.  **Abra o Terminal:** Você pode fazer isso diretamente no desktop do Pi ou via SSH.
+4.  **Atualize o Sistema:** É sempre uma boa prática garantir que seu sistema esteja atualizado.
     ```bash
-    git clone https://github.com/seu-usuario/seu-repositorio.git
+    sudo apt update && sudo apt upgrade -y
+    ```
+5.  **Habilite a Interface SPI:** O leitor RC522 usa a interface SPI, que precisa ser ativada.
+    ```bash
+    sudo raspi-config
+    ```
+    - Navegue até `3 Interface Options`.
+    - Selecione `I4 SPI`.
+    - Escolha `<Yes>` para habilitar a interface SPI.
+    - Saia do `raspi-config`.
+
+#### Passo 2: Conectando o Hardware
+
+1.  **Desligue o Raspberry Pi:** Antes de conectar qualquer componente, desligue o Pi completamente.
+    ```bash
+    sudo shutdown -h now
+    ```
+2.  **Conecte o Leitor RC522:** Use a tabela de pinagem na seção "Configuração do Hardware" acima para conectar o leitor aos pinos GPIO do seu Raspberry Pi.
+
+#### Passo 3: Instalando o Software da Jukebox
+
+1.  **Ligue o Raspberry Pi:** Reconecte a energia para ligar o Pi.
+2.  **Clone o Repositório:** Abra o terminal e clone este projeto.
+    ```bash
+    git clone https://github.com/rafaeltini/jukebox_rfid.git
     cd jukebox_rfid
     ```
-2.  Execute o script de instalação. Ele cuidará de tudo.
+3.  **Execute o Script de Instalação:** Este script automatiza todo o processo.
     ```bash
     bash install.sh
     ```
-    Escolha a opção **1** no menu para uma instalação completa. O script irá instalar pacotes do sistema, dependências Python em um ambiente virtual e configurar o serviço para iniciar no boot.
+    - No menu, digite `1` e pressione Enter para iniciar a instalação completa.
+    - O script irá instalar todas as dependências necessárias e configurar o software da Jukebox para iniciar automaticamente com o sistema.
+
+#### Passo 4: Encontrando e Usando a Jukebox
+
+1.  **Encontre o Endereço IP do Pi:** Você precisará do IP para acessar a interface web.
+    ```bash
+    hostname -I
+    ```
+    Anote o primeiro endereço IP que aparecer (ex: `192.168.1.15`).
+2.  **Acesse a Interface:** Em outro dispositivo na mesma rede (seu computador ou celular), abra um navegador e acesse `http://<IP-do-seu-Pi>:5000`, substituindo `<IP-do-seu-Pi>` pelo endereço que você anotou.
+3.  **Comece a Usar:** Agora você está pronto! Siga as instruções na seção "Como Usar" abaixo para adicionar suas músicas.
 
 ### 🎶 Como Usar
 
