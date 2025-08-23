@@ -292,10 +292,17 @@ def get_library():
         with cache_lock:
             associations = dict(tag_cache)
 
-        return jsonify({
+        response = jsonify({
             "songs": songs,
             "associations": associations
         })
+        # PT: Evita que o navegador guarde a lista em cache.
+        # EN: Prevents the browser from caching the list.
+        response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+        return response
+
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
