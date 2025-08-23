@@ -94,15 +94,6 @@ Siga estes passos para configurar sua Jukebox do zero.
     ```bash
     sudo apt update && sudo apt upgrade -y
     ```
-5.  **Habilite a Interface SPI:** O leitor RC522 usa a interface SPI, que precisa ser ativada.
-    ```bash
-    sudo raspi-config
-    ```
-    - Navegue até `3 Interface Options`.
-    - Selecione `I4 SPI`.
-    - Escolha `<Yes>` para habilitar a interface SPI.
-    - Saia do `raspi-config`.
-
 #### Passo 2: Conectando o Hardware
 
 1.  **Desligue o Raspberry Pi:** Antes de conectar qualquer componente, desligue o Pi completamente.
@@ -253,15 +244,6 @@ Follow these steps to set up your Jukebox from scratch.
     ```bash
     sudo apt update && sudo apt upgrade -y
     ```
-5.  **Enable the SPI Interface:** The RC522 reader uses the SPI interface, which must be enabled.
-    ```bash
-    sudo raspi-config
-    ```
-    - Navigate to `3 Interface Options`.
-    - Select `I4 SPI`.
-    - Choose `<Yes>` to enable the SPI interface.
-    - Exit `raspi-config`.
-
 #### Step 2: Connecting the Hardware
 
 1.  **Shut Down the Raspberry Pi:** Before connecting any components, shut down the Pi completely.
