@@ -2,6 +2,7 @@
 # EN: Imports the necessary libraries
 from flask import Flask, render_template, request, jsonify
 from flask_socketio import SocketIO
+from werkzeug.utils import secure_filename
 import os
 import threading
 import json
@@ -194,6 +195,24 @@ def play_pause():
     player.toggle_play_pause()
     return jsonify(player.get_status())
 
+@app.route('/api/play/<string:filename>', methods=['POST'])
+def play_song(filename):
+    """
+    PT: Toca uma música específica pelo nome do arquivo.
+    EN: Plays a specific song by its filename.
+    """
+    # Segurança: Garante que o nome do arquivo não contém caracteres de path.
+    if '/' in filename or '\\' in filename:
+        return jsonify({"status": "error", "message": "Nome de arquivo inválido."}), 400
+
+    song_path = os.path.join(MUSIC_FOLDER, filename)
+
+    if os.path.exists(song_path):
+        player.play(song_path)
+        return jsonify({"status": "success", "message": f"Tocando {filename}"})
+    else:
+        return jsonify({"status": "error", "message": "Arquivo não encontrado."}), 404
+
 @app.route('/api/volume', methods=['POST'])
 def volume():
     # PT: Endpoint para ajustar o volume.
@@ -227,6 +246,58 @@ def upload_file():
         return jsonify({"status": "success", "message": f"Arquivo '{filename}' salvo. Aproxime um cartão para associar."})
 
     return jsonify({"status": "error", "message": "Arquivo inválido. Apenas MP3 são permitidos. (Invalid file. Only MP3s are allowed.)"}), 400
+
+@app.route('/api/association/<string:tag_id>', methods=['DELETE'])
+def delete_association(tag_id):
+    """
+    PT: Deleta a associação de uma tag específica.
+    EN: Deletes the association for a specific tag.
+    """
+    if not tag_id:
+        return jsonify({"status": "error", "message": "ID da tag não fornecido."}), 400
+
+    with cache_lock:
+        if tag_id not in tag_cache:
+            return jsonify({"status": "error", "message": "Tag não encontrada."}), 404
+
+        # Remove do cache
+        del tag_cache[tag_id]
+
+        # Reescreve o arquivo tags.txt sem a linha deletada
+        try:
+            with open(TAGS_FILE, "w") as f:
+                for tid, song in tag_cache.items():
+                    f.write(f"{tid}:{song}\n")
+            return jsonify({"status": "success", "message": f"Associação para a tag {tag_id} deletada."})
+        except Exception as e:
+            # Se a reescrita falhar, idealmente deveríamos ter um rollback,
+            # mas por simplicidade vamos apenas logar o erro.
+            print(f"Erro ao reescrever o arquivo de tags: {e}")
+            # Recarregar o cache do arquivo para garantir consistência
+            load_tags_to_cache()
+            return jsonify({"status": "error", "message": "Erro ao salvar as alterações."}), 500
+
+@app.route('/api/library', methods=['GET'])
+def get_library():
+    """
+    PT: Retorna a lista de músicas e as associações de tags.
+    EN: Returns the list of songs and tag associations.
+    """
+    try:
+        # Lista de músicas na pasta
+        songs = [f for f in os.listdir(MUSIC_FOLDER) if f.endswith('.mp3')]
+        songs.sort()
+
+        # As associações já estão no cache em 'tag_cache'
+        with cache_lock:
+            associations = dict(tag_cache)
+
+        return jsonify({
+            "songs": songs,
+            "associations": associations
+        })
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 @app.route('/api/translations', methods=['GET'])
 def get_translations():
