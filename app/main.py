@@ -213,6 +213,30 @@ def play_song(filename):
     else:
         return jsonify({"status": "error", "message": "Arquivo não encontrado."}), 404
 
+@app.route('/api/initiate_association', methods=['POST'])
+def initiate_association():
+    """
+    PT: Inicia o modo de associação para um arquivo de música específico.
+    EN: Initiates assignment mode for a specific music file.
+    """
+    data = request.get_json()
+    if not data or 'filename' not in data:
+        return jsonify({"status": "error", "message": "Nome do arquivo não fornecido."}), 400
+
+    filename = data['filename']
+    # Segurança
+    if '/' in filename or '\\' in filename:
+        return jsonify({"status": "error", "message": "Nome de arquivo inválido."}), 400
+
+    song_path = os.path.join(MUSIC_FOLDER, filename)
+    if not os.path.exists(song_path):
+        return jsonify({"status": "error", "message": "Arquivo não encontrado."}), 404
+
+    with assignment_state["lock"]:
+        assignment_state["pending_file"] = filename
+
+    return jsonify({"status": "success", "message": f"Aproxime um cartão para associar à música: {filename}"})
+
 @app.route('/api/volume', methods=['POST'])
 def volume():
     # PT: Endpoint para ajustar o volume.
@@ -238,12 +262,7 @@ def upload_file():
         save_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(save_path)
 
-        # PT: Inicia o modo de associação
-        # EN: Initiates assignment mode
-        with assignment_state["lock"]:
-            assignment_state["pending_file"] = filename
-
-        return jsonify({"status": "success", "message": f"Arquivo '{filename}' salvo. Aproxime um cartão para associar."})
+        return jsonify({"status": "success", "message": f"Arquivo '{filename}' salvo com sucesso."})
 
     return jsonify({"status": "error", "message": "Arquivo inválido. Apenas MP3 são permitidos. (Invalid file. Only MP3s are allowed.)"}), 400
 
