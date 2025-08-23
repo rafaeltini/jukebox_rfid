@@ -149,7 +149,7 @@ input[type="range"] {
     h1 {
         font-size: 2em;
     }
-    .player-container, .upload-container {
+    .player-container, .upload-container, .rfid-test-container, .library-container, .tags-container {
         width: 95%;
         padding: 20px;
     }
