@@ -9,7 +9,11 @@
         "upload_status_uploading": "Enviando ",
         "upload_status_error": "Erro no envio.",
         "upload_status_success": " salvo. Aproxime um cartão para associar.",
-        "upload_status_invalid": "Por favor, selecione um arquivo MP3."
+        "upload_status_invalid": "Por favor, selecione um arquivo MP3.",
+        "rfid_test_title": "Teste de Cartão RFID",
+        "rfid_waiting": "Aguardando um cartão...",
+        "rfid_associated": "Associado",
+        "rfid_not_associated": "Não Associado"
     },
     "en": {
         "title": "🎶 RFID MP3 Jukebox",
@@ -21,6 +25,10 @@
         "upload_status_uploading": "Uploading ",
         "upload_status_error": "Upload error.",
         "upload_status_success": " saved. Scan a card to associate.",
-        "upload_status_invalid": "Please select an MP3 file."
+        "upload_status_invalid": "Please select an MP3 file.",
+        "rfid_test_title": "RFID Card Test",
+        "rfid_waiting": "Waiting for a card...",
+        "rfid_associated": "Associated",
+        "rfid_not_associated": "Not Associated"
     }
 }

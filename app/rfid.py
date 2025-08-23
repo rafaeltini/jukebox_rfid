@@ -1,83 +1,103 @@
 # PT: Este arquivo contém a lógica para interagir com o leitor RFID RC522.
-#     Ele usa a biblioteca mfrc522 e RPi.GPIO para comunicação com o hardware.
+#     Ele foi refatorado para usar uma classe que gerencia o ciclo de vida do leitor
+#     de forma mais eficiente.
 # EN: This file contains the logic for interacting with the RC522 RFID reader.
-#     It uses the mfrc522 library and RPi.GPIO for hardware communication.
+#     It has been refactored to use a class that manages the reader's lifecycle
+#     more efficiently.
 
 import RPi.GPIO as GPIO
 from mfrc522 import MFRC522
 import time
+import atexit
 
-def read_uid():
+class RFIDReader:
     """
-    PT: Aguarda a aproximação de um cartão RFID e lê o seu UID.
-        Esta função inicializa o leitor MFRC522, espera por um cartão,
-        lê o UID, e depois limpa os pinos GPIO. Ela é projetada para ser
-        chamada em um loop ou em uma thread separada.
-    EN: Waits for an RFID card to be presented and reads its UID.
-        This function initializes the MFRC522 reader, waits for a card,
-        reads the UID, and then cleans up the GPIO pins. It is designed
-        to be called in a loop or in a separate thread.
-
-    Returns:
-        str: PT: O UID do cartão lido, formatado como string (ex: "123-45-67-89"),
-                 ou None se a leitura for interrompida.
-             EN: The UID of the read card, formatted as a string (e.g., "123-45-67-89"),
-                 or None if the reading is interrupted.
+    PT: Uma classe para gerenciar a comunicação com o leitor RFID MFRC522.
+        Ela inicializa o leitor uma vez e garante que os pinos GPIO sejam
+        limpos corretamente quando o programa termina.
+    EN: A class to manage communication with the MFRC522 RFID reader.
+        It initializes the reader once and ensures the GPIO pins are
+        cleaned up correctly when the program exits.
     """
-    # PT: Instancia o leitor
-    # EN: Instantiates the reader
-    MIFAREReader = MFRC522()
+    def __init__(self):
+        """
+        PT: Inicializa o leitor MFRC522 e registra a função de limpeza
+            para ser chamada na saída do programa.
+        EN: Initializes the MFRC522 reader and registers the cleanup
+            function to be called on program exit.
+        """
+        try:
+            self.reader = MFRC522()
+            print("Leitor RFID inicializado com sucesso. / RFID reader initialized successfully.")
+            # PT: Registra a função de limpeza para ser chamada automaticamente na saída
+            # EN: Registers the cleanup function to be called automatically on exit
+            atexit.register(self.cleanup)
+        except Exception as e:
+            print(f"Falha ao inicializar o leitor RFID: {e}")
+            print("Isso pode acontecer se o programa não estiver rodando em um Raspberry Pi ou se a interface SPI não estiver habilitada.")
+            self.reader = None
 
-    print("Aproxime o cartão RFID do leitor para leitura... / Approach the RFID card to the reader...")
 
-    uid = None
-    try:
-        # PT: Loop contínuo para detectar o cartão
-        # EN: Continuous loop to detect the card
+    def read_uid(self):
+        """
+        PT: Aguarda a aproximação de um cartão RFID e lê o seu UID.
+            Esta é uma função bloqueante que continuará em loop até que um cartão seja encontrado.
+        EN: Waits for an RFID card to be presented and reads its UID.
+            This is a blocking call that will loop until a card is found.
+
+        Returns:
+            str: O UID do cartão como uma string, ou None se o leitor não foi inicializado.
+                 The card UID as a string, or None if the reader was not initialized.
+        """
+        if not self.reader:
+            time.sleep(1) # Avoid busy-looping if reader failed to init
+            return None
+
+        # PT: Loop para detectar o cartão
+        # EN: Loop to detect the card
         while True:
-            # PT: MFRC522_Request procura por cartões do tipo PICC (Proximity Integrated Circuit Card)
-            #     MI_OK é o status de sucesso
-            # EN: MFRC522_Request looks for PICC type cards (Proximity Integrated Circuit Card)
-            #     MI_OK is the success status
-            (status, TagType) = MIFAREReader.MFRC522_Request(MIFAREReader.PICC_REQIDL)
+            # PT: MFRC522_Request procura por cartões
+            # EN: MFRC522_Request scans for cards
+            (status, TagType) = self.reader.MFRC522_Request(self.reader.PICC_REQIDL)
 
-            if status == MIFAREReader.MI_OK:
-                print("Cartão detectado! / Card detected!")
-
+            if status == self.reader.MI_OK:
                 # PT: MFRC522_Anticoll obtém o UID do cartão
-                # EN: MFRC522_Anticoll gets the UID of the card
-                (status, uid_bytes) = MIFAREReader.MFRC522_Anticoll()
+                # EN: MFRC522_Anticoll gets the card's UID
+                (status, uid_bytes) = self.reader.MFRC522_Anticoll()
 
-                if status == MIFAREReader.MI_OK:
-                    # PT: Converte o UID de uma lista de bytes para uma string hifenizada
-                    # EN: Converts the UID from a list of bytes to a hyphenated string
+                if status == self.reader.MI_OK:
+                    # PT: Converte o UID de bytes para uma string hifenizada
+                    # EN: Converts the UID from bytes to a hyphenated string
                     uid = "-".join(map(str, uid_bytes))
-                    print(f"UID do Cartão (Card UID): {uid}")
-                    # PT: Retorna o UID e sai da função
-                    # EN: Returns the UID and exits the function
                     return uid
 
             # PT: Pequena pausa para não sobrecarregar a CPU
             # EN: Small pause to avoid overloading the CPU
             time.sleep(0.2)
 
-    except KeyboardInterrupt:
-        # PT: Permite que o programa seja interrompido com Ctrl+C
-        # EN: Allows the program to be interrupted with Ctrl+C
-        print("Leitura de RFID interrompida pelo usuário. / RFID reading interrupted by user.")
-        return None
-    finally:
-        # PT: Garante que os pinos GPIO sejam liberados ao final
-        # EN: Ensures that the GPIO pins are released at the end
+    def cleanup(self):
+        """
+        PT: Libera os recursos do GPIO.
+        EN: Releases GPIO resources.
+        """
+        print("Limpando pinos GPIO... / Cleaning up GPIO pins...")
         GPIO.cleanup()
 
 # PT: O código abaixo serve para testar este módulo de forma independente.
-#     Se você executar `python3 app/rfid.py`, ele irá iniciar o processo de leitura.
 # EN: The code below is for testing this module independently.
-#     If you run `python3 app/rfid.py`, it will start the reading process.
 if __name__ == "__main__":
-    card_uid = read_uid()
-    if card_uid:
-        print(f"\nUID lido com sucesso (UID read successfully): {card_uid}")
+    print("Iniciando teste do leitor RFID...")
+    reader = RFIDReader()
+    if reader.reader:
+        try:
+            while True:
+                print("\nAproxime um cartão para leitura... / Please scan a card...")
+                uid = reader.read_uid()
+                print(f"UID lido com sucesso (UID read successfully): {uid}")
+                # PT: Aguarda um pouco para evitar leituras múltiplas do mesmo cartão
+                # EN: Wait a bit to avoid multiple reads of the same card
+                time.sleep(1)
+        except KeyboardInterrupt:
+            print("\nTeste interrompido pelo usuário. / Test interrupted by user.")
     else:
-        print("\nNenhum UID foi lido. (No UID was read.)")
+        print("Não foi possível iniciar o teste pois o leitor RFID não foi inicializado.")
