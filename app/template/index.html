@@ -2,136 +2,143 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>🎶 Jukebox RFID</title>
+    <title>🎶 Jukebox RFID MP3</title>
     <link rel="stylesheet" href="/static/style.css">
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            padding: 40px;
-            background-color: #f0f0f0;
-        }
-
-        h1 {
-            font-size: 2em;
-            margin-bottom: 30px;
-        }
-
-        button {
-            padding: 10px 20px;
-            margin: 10px;
-            font-size: 16px;
-            cursor: pointer;
-        }
-
-        input[type="range"] {
-            width: 300px;
-            margin-top: 20px;
-        }
-
-        #status {
-            margin-top: 20px;
-            font-weight: bold;
-            color: #333;
-        }
-
-        #track {
-            margin-top: 40px;
-            font-size: 18px;
-        }
-
-        #rfid-cards {
-            margin-top: 40px;
-        }
-
-        .card {
-            display: inline-block;
-            padding: 20px;
-            margin: 10px;
-            background-color: #fff;
-            border: 2px solid #ccc;
-            border-radius: 10px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: transform 0.2s;
-        }
-
-        .card:hover {
-            transform: scale(1.05);
-            border-color: #888;
-        }
-    </style>
 </head>
 <body>
-    <h1>🎶 Jukebox RFID</h1>
+    <h1>🎶 Jukebox RFID MP3</h1>
 
-    <button onclick="send('play')">▶️ Play</button>
-    <button onclick="send('pause')">⏸️ Pause</button>
-
-    <div>
-        <label for="volume">🔊 Volume</label><br>
-        <input type="range" id="volume" min="0" max="100" value="50" onchange="setVolume(this.value)">
+    <div class="player-container">
+        <h2>Player</h2>
+        <div id="track-info">Nada tocando...</div>
+        <div class="controls">
+            <button id="play-pause-btn">▶️</button>
+            <div class="volume-control">
+                <label for="volume">🔊</label>
+                <input type="range" id="volume" min="0" max="100" value="50">
+            </div>
+        </div>
     </div>
 
-    <div id="status">Status: pronto</div>
-
-    <div id="track">
-        <h2>🎧 Tocando agora:</h2>
-        <p id="track-info">Carregando...</p>
-    </div>
-
-    <div id="rfid-cards">
-        <h2>🪪 Cartões RFID</h2>
-        <div class="card" onclick="send('play')">🎵 Cartão 1 - Play</div>
-        <div class="card" onclick="send('pause')">⏸️ Cartão 2 - Pause</div>
-        <div class="card" onclick="setVolume(80)">🔊 Cartão 3 - Volume 80%</div>
+    <div class="upload-container">
+        <h2>Adicionar Nova Música</h2>
+        <div id="drop-zone">
+            <p>Arraste um arquivo MP3 aqui ou clique para selecionar</p>
+            <input type="file" id="file-input" accept=".mp3" style="display: none;">
+        </div>
+        <div id="upload-status"></div>
     </div>
 
     <script>
-        function send(action) {
-            fetch(`/api/${action}`, { method: 'POST' })
-                .then(res => res.json())
-                .then(data => {
-                    document.getElementById('status').textContent = `Status: ${data.status || 'erro'}`;
-                })
-                .catch(() => {
-                    document.getElementById('status').textContent = 'Erro ao enviar comando';
-                });
+        const playPauseBtn = document.getElementById('play-pause-btn');
+        const volumeSlider = document.getElementById('volume');
+        const trackInfo = document.getElementById('track-info');
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const uploadStatus = document.getElementById('upload-status');
+
+        // --- Funções da API ---
+
+        const api = {
+            getStatus: () => fetch('/api/status').then(res => res.json()),
+            togglePlayPause: () => fetch('/api/play_pause', { method: 'POST' }).then(res => res.json()),
+            setVolume: (level) => fetch('/api/volume', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ level })
+            }).then(res => res.json()),
+            uploadFile: (file) => {
+                const formData = new FormData();
+                formData.append('file', file);
+                return fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData
+                }).then(res => res.json());
+            }
+        };
+
+        // --- Lógica da UI ---
+
+        function updateUI(status) {
+            // Atualiza o nome da música
+            trackInfo.textContent = status.current_song ? `Tocando: ${status.current_song}` : "Silêncio...";
+
+            // Atualiza o botão de play/pause
+            if (status.is_playing) {
+                playPauseBtn.textContent = status.is_paused ? '▶️' : '⏸️';
+            } else {
+                playPauseBtn.textContent = '▶️';
+            }
+
+            // Atualiza o slider de volume
+            volumeSlider.value = status.volume * 100;
         }
 
-        function setVolume(level) {
-            fetch(`/api/volume?level=${level}`, { method: 'POST' })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.volume) {
-                        document.getElementById('status').textContent = `Volume: ${data.volume}%`;
-                    } else {
-                        document.getElementById('status').textContent = `Erro: ${data.error}`;
+        playPauseBtn.addEventListener('click', () => {
+            api.togglePlayPause().then(updateUI);
+        });
+
+        volumeSlider.addEventListener('input', (e) => {
+            api.setVolume(e.target.value).then(updateUI);
+        });
+
+        // --- Lógica de Upload ---
+
+        dropZone.addEventListener('click', () => fileInput.click());
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('active');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('active');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('active');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFileUpload(files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFileUpload(e.target.files[0]);
+            }
+        });
+
+        function handleFileUpload(file) {
+            if (file && file.type === 'audio/mpeg') {
+                uploadStatus.textContent = `Enviando ${file.name}...`;
+                api.uploadFile(file).then(response => {
+                    uploadStatus.textContent = response.message;
+                    if (response.status === 'success') {
+                        // Após o sucesso, atualiza o status para mostrar a nova música se ela começar a tocar
+                        setTimeout(api.getStatus, 1000).then(updateUI);
                     }
-                })
-                .catch(() => {
-                    document.getElementById('status').textContent = 'Erro ao ajustar volume';
+                }).catch(err => {
+                    uploadStatus.textContent = 'Erro no envio.';
+                    console.error(err);
                 });
+            } else {
+                uploadStatus.textContent = 'Por favor, selecione um arquivo MP3.';
+            }
         }
 
-        function updateTrack() {
-            fetch('/api/track')
-                .then(res => res.json())
-                .then(data => {
-                    if (data.title && data.artist) {
-                        document.getElementById('track-info').textContent =
-                            `${data.title} — ${data.artist}`;
-                    } else {
-                        document.getElementById('track-info').textContent = 'Nada tocando';
-                    }
-                })
-                .catch(() => {
-                    document.getElementById('track-info').textContent = 'Erro ao obter faixa';
-                });
-        }
+        // --- Polling de Status ---
 
-        setInterval(updateTrack, 5000); // Atualiza a cada 5 segundos
-        updateTrack(); // Chamada inicial
+        // Inicia o polling para manter a UI sincronizada com o backend
+        setInterval(() => {
+            api.getStatus().then(updateUI);
+        }, 3000); // Atualiza a cada 3 segundos
+
+        // Carrega o status inicial
+        document.addEventListener('DOMContentLoaded', () => {
+            api.getStatus().then(updateUI);
+        });
     </script>
 </body>
 </html>

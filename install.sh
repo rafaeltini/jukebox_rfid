@@ -35,9 +35,36 @@ if [ "$opcao" == "1" ]; then
     curl -sL https://dtcooper.github.io/raspotify/install.sh | sh || { echo "❌ Falha ao instalar Raspotify"; exit 1; }
 
     echo "🛠️ Configurando serviço..."
-    sudo cp jukebox.service /etc/systemd/system/ || { echo "❌ Falha ao copiar serviço"; exit 1; }
-    sudo systemctl daemon-reexec
+    # Obtém o diretório absoluto do script para evitar problemas com caminhos relativos.
+    SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)
+
+    # Cria o arquivo de serviço do systemd dinamicamente com os caminhos corretos.
+    # Isso torna a instalação independente do local onde o repositório foi clonado.
+    sudo tee /etc/systemd/system/jukebox.service > /dev/null <<EOF
+[Unit]
+Description=Jukebox RFID Web Server
+After=network.target
+
+[Service]
+# Executa o main.py usando o Python do ambiente virtual (venv).
+ExecStart=$SCRIPT_DIR/venv/bin/python3 $SCRIPT_DIR/app/main.py
+# Define o diretório de trabalho para a pasta da aplicação.
+WorkingDirectory=$SCRIPT_DIR/app
+Restart=always
+# É recomendado rodar o serviço com um usuário não-root que tenha as permissões necessárias.
+# O usuário 'pi' é o padrão no Raspberry Pi OS.
+User=pi
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+    echo "🔄 Recarregando e reiniciando o serviço systemd..."
+    # Recarrega o systemd para que ele leia o novo arquivo de serviço.
+    sudo systemctl daemon-reload
+    # Habilita o serviço para iniciar no boot.
     sudo systemctl enable jukebox.service
+    # Reinicia o serviço para aplicar as novas configurações.
     sudo systemctl restart jukebox.service || { echo "❌ Falha ao iniciar serviço"; exit 1; }
 
     echo "📱 Gerando QR Code..."
