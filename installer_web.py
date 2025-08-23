@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template_string
+from flask import Flask, request, render_template
 import subprocess
 
 app = Flask(__name__)
@@ -23,7 +23,7 @@ def index():
             output = result.stdout + "\n" + result.stderr
         except Exception as e:
             output = f"Erro ao executar: {e}"
-    return render_template_string(HTML, output=output)
+    return render_template("index.html", output=output)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5001)
