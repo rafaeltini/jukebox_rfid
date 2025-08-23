@@ -1,13 +1,20 @@
 # 🎶 Jukebox RFID MP3 Player
 
-Este projeto transforma um Raspberry Pi em uma Jukebox de MP3 controlada por cartões RFID. Use a interface web para fazer upload de suas músicas, associar cada música a um cartão RFID e, em seguida, simplesmente aproxime o cartão do leitor para tocar sua música.
+## 🌐 Language / Idioma
+
+- [🇧🇷 Português](#-português)
+- [🇺🇸 English](#-english)
 
 ---
+## 🇧🇷 Português
+
+Este projeto transforma um Raspberry Pi em uma Jukebox de MP3 controlada por cartões RFID. Use a interface web para fazer upload de suas músicas, associar cada música a um cartão RFID e, em seguida, simplesmente aproxime o cartão do leitor para tocar sua música.
 
 ### ✨ Funcionalidades
 
 - **Playback por RFID:** Associe arquivos MP3 a cartões RFID e toque-os instantaneamente.
 - **Interface Web Completa:** Controle a reprodução (play/pause), ajuste o volume e veja a música que está tocando.
+- **Interface Multilíngue:** Alterne entre Português e Inglês com um clique.
 - **Upload de Músicas:** Arraste e solte seus arquivos MP3 diretamente na interface web para adicioná-los à sua biblioteca.
 - **Associação de Cartões Simplificada:** Após o upload de uma música, a interface pede que você escaneie um cartão para criar a associação.
 - **Instalação Automatizada:** O script `install.sh` configura todas as dependências de software, incluindo `pygame` para áudio e as bibliotecas GPIO.
@@ -101,11 +108,12 @@ Siga estes passos para configurar sua Jukebox do zero.
 ### 🎶 Como Usar
 
 1.  **Acesse a Interface Web:** Após a instalação, o serviço iniciará automaticamente. Encontre o IP do seu Raspberry Pi e acesse `http://<IP-do-seu-Pi>:5000` em um navegador na mesma rede.
-2.  **Faça o Upload de uma Música:** Na interface, arraste um arquivo MP3 para a área de upload designada.
-3.  **Associe um Cartão:** Após o upload ser bem-sucedido, a interface mostrará a mensagem: *"Arquivo 'nome-da-musica.mp3' salvo. Aproxime um cartão para associar."*
-4.  **Escaneie o Cartão:** Aproxime um cartão RFID do leitor. O sistema irá associar permanentemente esse cartão à música que você acabou de enviar.
-5.  **Toque sua Música:** Agora, sempre que você aproximar esse cartão do leitor, a música associada começará a tocar.
-6.  **Controle a Reprodução:** Use os botões de play/pause e o controle de volume na interface web para gerenciar a música.
+2.  **Escolha o Idioma:** Use as bandeiras 🇧🇷 / 🇺🇸 no canto superior direito para alternar o idioma da interface.
+3.  **Faça o Upload de uma Música:** Na interface, arraste um arquivo MP3 para a área de upload designada.
+4.  **Associe um Cartão:** Após o upload ser bem-sucedido, a interface mostrará a mensagem: *"Arquivo 'nome-da-musica.mp3' salvo. Aproxime um cartão para associar."*
+5.  **Escaneie o Cartão:** Aproxime um cartão RFID do leitor. O sistema irá associar permanentemente esse cartão à música que você acabou de enviar.
+6.  **Toque sua Música:** Agora, sempre que você aproximar esse cartão do leitor, a música associada começará a tocar.
+7.  **Controle a Reprodução:** Use os botões de play/pause e o controle de volume na interface web para gerenciar a música.
 
 ### 📁 Estrutura do Projeto
 
@@ -116,11 +124,140 @@ Siga estes passos para configurar sua Jukebox do zero.
 │   ├── player.py           # Classe que gerencia a reprodução de áudio com pygame.
 │   ├── rfid.py             # Módulo para comunicação de baixo nível com o leitor RC522.
 │   ├── static/style.css    # Folha de estilos da interface web.
-│   └── template/index.html # Estrutura HTML da interface web.
+│   ├── template/index.html # Estrutura HTML da interface web.
+│   └── translations.json   # Arquivo com as traduções da UI.
 ├── music/                  # Diretório onde os MP3s enviados são armazenados.
 ├── install.sh              # Script de instalação e configuração.
 ├── qr_generator.py         # Gera um QR code para acesso fácil à interface.
 ├── requirements.txt        # Dependências Python do projeto.
 └── tags.txt                # Arquivo de texto que armazena as associações (UID -> MP3).
+```
+
+---
+## 🇺🇸 English
+
+This project transforms a Raspberry Pi into an MP3 Jukebox controlled by RFID cards. Use the web interface to upload your music, associate each song with an RFID card, and then simply tap the card on the reader to play your music.
+
+### ✨ Features
+
+- **RFID Playback:** Associate MP3 files with RFID cards and play them instantly.
+- **Complete Web Interface:** Control playback (play/pause), adjust the volume, and see the currently playing song.
+- **Multilingual Interface:** Switch between Portuguese and English with one click.
+- **Music Upload:** Drag and drop your MP3 files directly into the web interface to add them to your library.
+- **Simplified Card Association:** After uploading a song, the interface prompts you to scan a card to create the association.
+- **Automated Installation:** The `install.sh` script configures all software dependencies, including `pygame` for audio and GPIO libraries.
+- **Standalone Service:** Runs as a background service (`systemd`) that starts automatically with the Raspberry Pi.
+
+### ✅ Hardware Requirements
+
+- **Raspberry Pi:** Tested on Pi 2 W, but should work on newer models.
+- **RFID Reader:** RC522 reader connected via SPI.
+- **RFID Cards/Tags:** Compatible with the RC522 reader (e.g., MIFARE Classic).
+- **Audio Output:**
+    - The standard Pi audio output (3.5mm or HDMI).
+    - Or a DAC HAT, such as the **Waveshare HiFi DAC HAT**.
+
+### 🔧 Hardware Setup
+
+#### RFID RC522 Reader Pinout
+Connect the reader to the Raspberry Pi using the following GPIO pins:
+
+| RC522 Pin  | Raspberry Pi GPIO | Pi Name     | Function              |
+|------------|-------------------|-------------|-----------------------|
+| SDA (CS)   | GPIO 8            | SPI0_CE0    | Chip Select           |
+| SCK (CLK)  | GPIO 11           | SPI0_SCLK   | Clock                 |
+| MOSI       | GPIO 10           | SPI0_MOSI   | Master Out Slave In   |
+| MISO       | GPIO 9            | SPI0_MISO   | Master In Slave Out   |
+| IRQ        | -                 | -           | (not used)            |
+| GND        | GND               | GND         | Ground                |
+| RST        | GPIO 25           | GPIO 25     | Reset                 |
+| 3.3V       | 3.3V              | 3.3V        | Power                 |
+
+**Important:** The RFID library used in this project does not utilize the `RST` pin. It can be left disconnected.
+
+#### Note on the Waveshare HiFi HAT
+This project uses `pygame.mixer` to control audio, which in turn uses the ALSA system on Linux. The volume control in the web interface does **not** use `amixer` and should work with any standard output device. If you need command-line volume control, you may need to identify your HAT's mixer control name with the `amixer` command and adjust scripts accordingly.
+
+### 🚀 Complete Installation Guide
+
+Follow these steps to set up your Jukebox from scratch.
+
+#### Step 1: Preparing the Raspberry Pi
+
+1.  **Install Raspberry Pi OS:** Use the [Raspberry Pi Imager](https://www.raspberrypi.com/software/) to install the latest version of Raspberry Pi OS on an SD card.
+2.  **First Boot and Setup:** Start your Raspberry Pi, connect it to your Wi-Fi network, and complete the initial setup.
+3.  **Open the Terminal:** You can do this directly on the Pi's desktop or via SSH.
+4.  **Update Your System:** It's always good practice to ensure your system is up to date.
+    ```bash
+    sudo apt update && sudo apt upgrade -y
+    ```
+5.  **Enable the SPI Interface:** The RC522 reader uses the SPI interface, which must be enabled.
+    ```bash
+    sudo raspi-config
+    ```
+    - Navigate to `3 Interface Options`.
+    - Select `I4 SPI`.
+    - Choose `<Yes>` to enable the SPI interface.
+    - Exit `raspi-config`.
+
+#### Step 2: Connecting the Hardware
+
+1.  **Shut Down the Raspberry Pi:** Before connecting any components, shut down the Pi completely.
+    ```bash
+    sudo shutdown -h now
+    ```
+2.  **Connect the RC522 Reader:** Use the pinout table in the "Hardware Setup" section above to connect the reader to your Raspberry Pi's GPIO pins.
+
+#### Step 3: Installing the Jukebox Software
+
+1.  **Power On the Raspberry Pi:** Reconnect the power to turn on the Pi.
+2.  **Clone the Repository:** Open the terminal and clone this project.
+    ```bash
+    git clone https://github.com/rafaeltini/jukebox_rfid.git
+    cd jukebox_rfid
+    ```
+3.  **Run the Install Script:** This script automates the entire process.
+    ```bash
+    bash install.sh
+    ```
+    - In the menu, type `1` and press Enter to start the full installation.
+    - The script will install all necessary dependencies and set up the Jukebox software to start automatically with the system.
+
+#### Step 4: Finding and Using the Jukebox
+
+1.  **Find the Pi's IP Address:** You'll need the IP to access the web interface.
+    ```bash
+    hostname -I
+    ```
+    Note the first IP address that appears (e.g., `192.168.1.15`).
+2.  **Access the Interface:** On another device on the same network (your computer or phone), open a browser and go to `http://<Your-Pi-IP>:5000`, replacing `<Your-Pi-IP>` with the address you noted.
+3.  **Start Using:** You're all set! Follow the instructions in the "How to Use" section below to add your music.
+
+### 🎶 How to Use
+
+1.  **Access the Web Interface:** After installation, the service will start automatically. Find your Raspberry Pi's IP address and go to `http://<Your-Pi-IP>:5000` in a browser on the same network.
+2.  **Choose the Language:** Use the 🇧🇷 / 🇺🇸 flags in the top-right corner to switch the interface language.
+3.  **Upload a Song:** In the interface, drag and drop an MP3 file into the designated upload area.
+4.  **Associate a Card:** After a successful upload, the interface will display the message: *"File 'song-name.mp3' saved. Scan a card to associate."*
+5.  **Scan the Card:** Tap an RFID card on the reader. The system will permanently associate that card with the song you just uploaded.
+6.  **Play Your Music:** Now, whenever you tap that card on the reader, its associated song will begin to play.
+7.  **Control Playback:** Use the play/pause buttons and the volume slider in the web interface to manage the music.
+
+### 📁 Project Structure
+
+```
+.
+├── app/
+│   ├── main.py             # Main application (Flask), API, and RFID logic.
+│   ├── player.py           # Class that manages audio playback with pygame.
+│   ├── rfid.py             # Low-level communication module for the RC522 reader.
+│   ├── static/style.css    # Stylesheet for the web interface.
+│   ├── template/index.html # HTML structure for the web interface.
+│   └── translations.json   # File with the UI translations.
+├── music/                  # Directory where uploaded MP3s are stored.
+├── install.sh              # Installation and setup script.
+├── qr_generator.py         # Generates a QR code for easy access to the interface.
+├── requirements.txt        # Python project dependencies.
+└── tags.txt                # Text file that stores the associations (UID -> MP3).
 ```
 ```

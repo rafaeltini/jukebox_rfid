@@ -35,24 +35,31 @@ if [ "$opcao" == "1" ]; then
     curl -sL https://dtcooper.github.io/raspotify/install.sh | sh || { echo "❌ Falha ao instalar Raspotify"; exit 1; }
 
     echo "🛠️ Configurando serviço..."
-    # Obtém o diretório absoluto do script para evitar problemas com caminhos relativos.
+    # PT: Obtém o diretório absoluto do script para evitar problemas com caminhos relativos.
+    # EN: Gets the absolute directory of the script to avoid problems with relative paths.
     SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)
 
-    # Cria o arquivo de serviço do systemd dinamicamente com os caminhos corretos.
-    # Isso torna a instalação independente do local onde o repositório foi clonado.
+    # PT: Cria o arquivo de serviço do systemd dinamicamente com os caminhos corretos.
+    # PT: Isso torna a instalação independente do local onde o repositório foi clonado.
+    # EN: Dynamically creates the systemd service file with the correct paths.
+    # EN: This makes the installation independent of where the repository was cloned.
     sudo tee /etc/systemd/system/jukebox.service > /dev/null <<EOF
 [Unit]
 Description=Jukebox RFID Web Server
 After=network.target
 
 [Service]
-# Executa o main.py usando o Python do ambiente virtual (venv).
+# PT: Executa o main.py usando o Python do ambiente virtual (venv).
+# EN: Executes main.py using the Python from the virtual environment (venv).
 ExecStart=$SCRIPT_DIR/venv/bin/python3 $SCRIPT_DIR/app/main.py
-# Define o diretório de trabalho para a pasta da aplicação.
+# PT: Define o diretório de trabalho para a pasta da aplicação.
+# EN: Sets the working directory to the application folder.
 WorkingDirectory=$SCRIPT_DIR/app
 Restart=always
-# É recomendado rodar o serviço com um usuário não-root que tenha as permissões necessárias.
-# O usuário 'pi' é o padrão no Raspberry Pi OS.
+# PT: É recomendado rodar o serviço com um usuário não-root que tenha as permissões necessárias.
+# PT: O usuário 'pi' é o padrão no Raspberry Pi OS.
+# EN: It is recommended to run the service with a non-root user who has the necessary permissions.
+# EN: The 'pi' user is the default on Raspberry Pi OS.
 User=pi
 
 [Install]
@@ -60,11 +67,14 @@ WantedBy=multi-user.target
 EOF
 
     echo "🔄 Recarregando e reiniciando o serviço systemd..."
-    # Recarrega o systemd para que ele leia o novo arquivo de serviço.
+    # PT: Recarrega o systemd para que ele leia o novo arquivo de serviço.
+    # EN: Reloads systemd so it reads the new service file.
     sudo systemctl daemon-reload
-    # Habilita o serviço para iniciar no boot.
+    # PT: Habilita o serviço para iniciar no boot.
+    # EN: Enables the service to start on boot.
     sudo systemctl enable jukebox.service
-    # Reinicia o serviço para aplicar as novas configurações.
+    # PT: Reinicia o serviço para aplicar as novas configurações.
+    # EN: Restarts the service to apply the new settings.
     sudo systemctl restart jukebox.service || { echo "❌ Falha ao iniciar serviço"; exit 1; }
 
     echo "📱 Gerando QR Code..."
