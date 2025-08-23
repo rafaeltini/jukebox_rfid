@@ -1,118 +1,84 @@
-# 🎶 Jukebox RFID
+# 🎶 Jukebox RFID MP3 Player
 
-Sistema de jukebox controlado por cartões RFID, com interface web, integração com Spotify Connect e instalação automatizada.
-
----
-
-## 🌐 Language / Idioma
-
-- [🇧🇷 Português](#-português)
-- [🇺🇸 English](#-english)
+Este projeto transforma um Raspberry Pi em uma Jukebox de MP3 controlada por cartões RFID. Use a interface web para fazer upload de suas músicas, associar cada música a um cartão RFID e, em seguida, simplesmente aproxime o cartão do leitor para tocar sua música.
 
 ---
 
-## 🇧🇷 Português
+### ✨ Funcionalidades
 
-### 🚀 Instalação
+- **Playback por RFID:** Associe arquivos MP3 a cartões RFID e toque-os instantaneamente.
+- **Interface Web Completa:** Controle a reprodução (play/pause), ajuste o volume e veja a música que está tocando.
+- **Upload de Músicas:** Arraste e solte seus arquivos MP3 diretamente na interface web para adicioná-los à sua biblioteca.
+- **Associação de Cartões Simplificada:** Após o upload de uma música, a interface pede que você escaneie um cartão para criar a associação.
+- **Instalação Automatizada:** O script `install.sh` configura todas as dependências de software, incluindo `pygame` para áudio e as bibliotecas GPIO.
+- **Serviço Autônomo:** Roda como um serviço de fundo (`systemd`) que inicia automaticamente com o Raspberry Pi.
 
-#### ✅ Requisitos
+### ✅ Requisitos de Hardware
 
-- Raspberry Pi com Raspberry Pi OS
-- Conexão à internet
-- Leitor RFID RC522 conectado via SPI
-- Conta Spotify Premium (para usar o Raspotify)
+- **Raspberry Pi:** Testado com Pi 2 W, mas deve funcionar em modelos mais recentes.
+- **Leitor RFID:** Leitor RC522 conectado via SPI.
+- **Cartões/Tags RFID:** Compatíveis com o leitor RC522 (ex: MIFARE Classic).
+- **Saída de Áudio:**
+    - A saída de áudio padrão do Pi (3.5mm ou HDMI).
+    - Ou um DAC HAT, como o **Waveshare HiFi DAC HAT**.
 
-#### 📦 Passo a passo
+### 🔧 Configuração do Hardware
 
-```bash
-git clone https://github.com/rafaeltini/jukebox_rfid.git
-cd jukebox_rfid
-bash install.sh
+#### Pinagem do Leitor RFID RC522
+Conecte o leitor ao Raspberry Pi usando os seguintes pinos GPIO:
 
-Escolha uma opção no menu:
-- 1 – Instalar sistema completo
-- 2 – Reiniciar Raspberry Pi
-- 3 – Desinstalar Jukebox
-🌐 Interface Web da Jukebox
-Após a instalação, o servidor Flask será iniciado automaticamente via systemd.
-Acesse via navegador:
+| Pino do RC522 | GPIO do Raspberry Pi | Nome no Pi  | Função                |
+|---------------|----------------------|-------------|-----------------------|
+| SDA (CS)      | GPIO 8               | SPI0_CE0    | Chip Select           |
+| SCK (CLK)     | GPIO 11              | SPI0_SCLK   | Clock                 |
+| MOSI          | GPIO 10              | SPI0_MOSI   | Master Out Slave In   |
+| MISO          | GPIO 9               | SPI0_MISO   | Master In Slave Out   |
+| IRQ           | -                    | -           | (não usado)           |
+| GND           | GND                  | GND         | Terra (Ground)        |
+| RST           | GPIO 25              | GPIO 25     | Reset                 |
+| 3.3V          | 3.3V                 | 3.3V        | Alimentação (Power)   |
 
-http://<IP-do-RaspberryPi>:5000
+**Importante:** A biblioteca RFID usada neste projeto não utiliza o pino `RST`. Ele pode ser deixado desconectado.
 
-Um QR Code será gerado para facilitar o acesso via celular.
-🛠️ Serviço systemd
-sudo systemctl restart jukebox
-sudo systemctl stop jukebox
-sudo systemctl status jukebox
+#### Nota sobre o Waveshare HiFi HAT
+Este projeto usa o `pygame.mixer` para controlar o áudio, que por sua vez usa o sistema ALSA no Linux. O controle de volume na interface web **não** usa `amixer` e deve funcionar com qualquer dispositivo de saída padrão. Se você precisar de controle de volume via linha de comando, pode precisar identificar o nome do controle do seu HAT com o comando `amixer` e ajustar os scripts conforme necessário.
 
+### 🚀 Instalação de Software
 
-🌐 Interface Web do Instalador (opcional)
-source venv/bin/activate
-python3 installer_web.py
+1.  Clone o repositório no seu Raspberry Pi:
+    ```bash
+    git clone https://github.com/seu-usuario/seu-repositorio.git
+    cd jukebox_rfid
+    ```
+2.  Execute o script de instalação. Ele cuidará de tudo.
+    ```bash
+    bash install.sh
+    ```
+    Escolha a opção **1** no menu para uma instalação completa. O script irá instalar pacotes do sistema, dependências Python em um ambiente virtual e configurar o serviço para iniciar no boot.
 
+### 🎶 Como Usar
 
-Acesse:
-http://<IP-do-RaspberryPi>:5001
+1.  **Acesse a Interface Web:** Após a instalação, o serviço iniciará automaticamente. Encontre o IP do seu Raspberry Pi e acesse `http://<IP-do-seu-Pi>:5000` em um navegador na mesma rede.
+2.  **Faça o Upload de uma Música:** Na interface, arraste um arquivo MP3 para a área de upload designada.
+3.  **Associe um Cartão:** Após o upload ser bem-sucedido, a interface mostrará a mensagem: *"Arquivo 'nome-da-musica.mp3' salvo. Aproxime um cartão para associar."*
+4.  **Escaneie o Cartão:** Aproxime um cartão RFID do leitor. O sistema irá associar permanentemente esse cartão à música que você acabou de enviar.
+5.  **Toque sua Música:** Agora, sempre que você aproximar esse cartão do leitor, a música associada começará a tocar.
+6.  **Controle a Reprodução:** Use os botões de play/pause e o controle de volume na interface web para gerenciar a música.
 
+### 📁 Estrutura do Projeto
 
-🧹 Desinstalação
-Execute novamente o instalador e escolha a opção 3.
-📄 Logs
-Todas as ações do instalador são registradas em install.log na raiz do projeto.
-📬 Contato
-Criado por rafaeltini.
-Sugestões, melhorias ou bugs? Abra uma issue ou envie um pull request!
-
-🇺🇸 English
-🚀 Installation
-✅ Requirements
-- Raspberry Pi with Raspberry Pi OS
-- Internet connection
-- RC522 RFID reader connected via SPI
-- Spotify Premium account (for Raspotify)
-📦 Steps
-git clone https://github.com/rafaeltini/jukebox_rfid.git
-cd jukebox_rfid
-bash install.sh
-
-
-Choose an option from the menu:
-- 1 – Full system installation
-- 2 – Reboot Raspberry Pi
-- 3 – Uninstall Jukebox
-🌐 Jukebox Web Interface
-After installation, the Flask server will start automatically via systemd.
-Access via browser:
-http://<RaspberryPi-IP>:5000
-
-
-Example: http://192.168.0.105:5000
-
-A QR Code will be generated for easy mobile access.
-🛠️ systemd Service
-sudo systemctl restart jukebox
-sudo systemctl stop jukebox
-sudo systemctl status jukebox
-
-
-🌐 Web Installer Interface (optional)
-source venv/bin/activate
-python3 installer_web.py
-
-
-Access:
-http://<RaspberryPi-IP>:5001
-
-
-🧹 Uninstallation
-Run the installer again and choose option 3.
-📄 Logs
-All installer actions are logged in install.log at the project root.
-📬 Contact
-Created by rafaeltini.
-Suggestions, improvements or bugs? Open an issue or submit a pull request!
-
----
-
-
-
+```
+.
+├── app/
+│   ├── main.py             # Aplicação principal (Flask), API e lógica de RFID.
+│   ├── player.py           # Classe que gerencia a reprodução de áudio com pygame.
+│   ├── rfid.py             # Módulo para comunicação de baixo nível com o leitor RC522.
+│   ├── static/style.css    # Folha de estilos da interface web.
+│   └── template/index.html # Estrutura HTML da interface web.
+├── music/                  # Diretório onde os MP3s enviados são armazenados.
+├── install.sh              # Script de instalação e configuração.
+├── qr_generator.py         # Gera um QR code para acesso fácil à interface.
+├── requirements.txt        # Dependências Python do projeto.
+└── tags.txt                # Arquivo de texto que armazena as associações (UID -> MP3).
+```
+```

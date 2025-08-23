@@ -1,2 +1,4 @@
 Flask
 qrcode
+mfrc522
+pygame

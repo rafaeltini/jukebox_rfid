@@ -1,87 +1,122 @@
-/* Reset básico */
+/* --- Estrutura Geral --- */
 body {
     margin: 0;
-    padding: 0;
+    padding: 20px;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background-color: #121212;
     color: #f0f0f0;
     text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 30px;
 }
 
-/* Título */
 h1 {
-    margin-top: 30px;
-    font-size: 2.5em;
-    color: #00ffcc;
-}
-
-/* Botões principais */
-button {
-    background-color: #00ffcc;
-    color: #121212;
-    border: none;
-    padding: 12px 20px;
-    margin: 10px;
-    font-size: 1.1em;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-}
-
-button:hover {
-    background-color: #00ddb3;
-}
-
-/* Ícones dentro dos botões */
-button i {
-    margin-right: 8px;
-}
-
-/* Cards RFID simulados */
-.card {
-    background-color: #1e1e1e;
-    border: 2px solid #00ffcc;
-    border-radius: 10px;
-    padding: 15px;
-    margin: 15px auto;
-    width: 80%;
-    max-width: 400px;
-    font-size: 1.2em;
-    cursor: pointer;
-    transition: transform 0.2s ease, background-color 0.3s ease;
-}
-
-.card:hover {
-    transform: scale(1.03);
-    background-color: #2a2a2a;
-}
-
-.card i {
-    margin-right: 10px;
-    color: #00ffcc;
-}
-
-/* Controle de volume */
-label {
-    font-size: 1.1em;
     margin-top: 20px;
-    display: block;
+    font-size: 2.5em;
+    color: #1DB954; /* Cor do Spotify */
+}
+
+h2 {
+    color: #fff;
+    border-bottom: 2px solid #1DB954;
+    padding-bottom: 5px;
+    margin-bottom: 20px;
+}
+
+/* --- Container do Player --- */
+.player-container, .upload-container {
+    background-color: #1e1e1e;
+    border-radius: 12px;
+    padding: 25px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+}
+
+#track-info {
+    font-size: 1.2em;
+    color: #ccc;
+    min-height: 1.5em;
+    margin-bottom: 20px;
+    font-weight: bold;
+}
+
+.controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+}
+
+#play-pause-btn {
+    background-color: #1DB954;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    font-size: 2em;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#play-pause-btn:hover {
+    background-color: #1ed760;
+    transform: scale(1.05);
+}
+
+.volume-control {
+    display: flex;
+    align-items: center;
+    flex-grow: 1;
+}
+
+.volume-control label {
+    font-size: 1.5em;
 }
 
 input[type="range"] {
-    width: 60%;
-    margin: 10px auto;
-    accent-color: #00ffcc;
+    width: 100%;
+    accent-color: #1DB954;
+    cursor: pointer;
 }
 
-/* Responsivo */
+/* --- Container de Upload --- */
+#drop-zone {
+    border: 2px dashed #555;
+    border-radius: 10px;
+    padding: 40px 20px;
+    cursor: pointer;
+    transition: background-color 0.3s, border-color 0.3s;
+}
+
+#drop-zone.active {
+    background-color: #2a2a2a;
+    border-color: #1DB954;
+}
+
+#upload-status {
+    margin-top: 15px;
+    font-weight: bold;
+    color: #1DB954;
+    min-height: 1.2em;
+}
+
+/* --- Responsivo --- */
 @media (max-width: 600px) {
-    button, .card {
-        font-size: 1em;
+    body {
         padding: 10px;
     }
-
-    input[type="range"] {
-        width: 80%;
+    h1 {
+        font-size: 2em;
+    }
+    .player-container, .upload-container {
+        width: 95%;
+        padding: 20px;
     }
 }
