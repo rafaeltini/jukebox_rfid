@@ -1,10 +1,87 @@
+/* Reset básico */
 body {
-    font-family: sans-serif;
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #121212;
+    color: #f0f0f0;
     text-align: center;
-    margin-top: 50px;
 }
+
+/* Título */
+h1 {
+    margin-top: 30px;
+    font-size: 2.5em;
+    color: #00ffcc;
+}
+
+/* Botões principais */
 button {
+    background-color: #00ffcc;
+    color: #121212;
+    border: none;
+    padding: 12px 20px;
     margin: 10px;
-    padding: 10px 20px;
-    font-size: 16px;
+    font-size: 1.1em;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+button:hover {
+    background-color: #00ddb3;
+}
+
+/* Ícones dentro dos botões */
+button i {
+    margin-right: 8px;
+}
+
+/* Cards RFID simulados */
+.card {
+    background-color: #1e1e1e;
+    border: 2px solid #00ffcc;
+    border-radius: 10px;
+    padding: 15px;
+    margin: 15px auto;
+    width: 80%;
+    max-width: 400px;
+    font-size: 1.2em;
+    cursor: pointer;
+    transition: transform 0.2s ease, background-color 0.3s ease;
+}
+
+.card:hover {
+    transform: scale(1.03);
+    background-color: #2a2a2a;
+}
+
+.card i {
+    margin-right: 10px;
+    color: #00ffcc;
+}
+
+/* Controle de volume */
+label {
+    font-size: 1.1em;
+    margin-top: 20px;
+    display: block;
+}
+
+input[type="range"] {
+    width: 60%;
+    margin: 10px auto;
+    accent-color: #00ffcc;
+}
+
+/* Responsivo */
+@media (max-width: 600px) {
+    button, .card {
+        font-size: 1em;
+        padding: 10px;
+    }
+
+    input[type="range"] {
+        width: 80%;
+    }
 }

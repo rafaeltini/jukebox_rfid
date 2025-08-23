@@ -1,21 +1,137 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-br">
 <head>
-    <title>Jukebox RFID</title>
+    <meta charset="UTF-8">
+    <title>🎶 Jukebox RFID</title>
     <link rel="stylesheet" href="/static/style.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 40px;
+            background-color: #f0f0f0;
+        }
+
+        h1 {
+            font-size: 2em;
+            margin-bottom: 30px;
+        }
+
+        button {
+            padding: 10px 20px;
+            margin: 10px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        input[type="range"] {
+            width: 300px;
+            margin-top: 20px;
+        }
+
+        #status {
+            margin-top: 20px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        #track {
+            margin-top: 40px;
+            font-size: 18px;
+        }
+
+        #rfid-cards {
+            margin-top: 40px;
+        }
+
+        .card {
+            display: inline-block;
+            padding: 20px;
+            margin: 10px;
+            background-color: #fff;
+            border: 2px solid #ccc;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: transform 0.2s;
+        }
+
+        .card:hover {
+            transform: scale(1.05);
+            border-color: #888;
+        }
+    </style>
 </head>
 <body>
     <h1>🎶 Jukebox RFID</h1>
-    <button onclick="send('play')">Play</button>
-    <button onclick="send('pause')">Pause</button>
-    <input type="range" min="0" max="100" value="50" onchange="setVolume(this.value)">
+
+    <button onclick="send('play')">▶️ Play</button>
+    <button onclick="send('pause')">⏸️ Pause</button>
+
+    <div>
+        <label for="volume">🔊 Volume</label><br>
+        <input type="range" id="volume" min="0" max="100" value="50" onchange="setVolume(this.value)">
+    </div>
+
+    <div id="status">Status: pronto</div>
+
+    <div id="track">
+        <h2>🎧 Tocando agora:</h2>
+        <p id="track-info">Carregando...</p>
+    </div>
+
+    <div id="rfid-cards">
+        <h2>🪪 Cartões RFID</h2>
+        <div class="card" onclick="send('play')">🎵 Cartão 1 - Play</div>
+        <div class="card" onclick="send('pause')">⏸️ Cartão 2 - Pause</div>
+        <div class="card" onclick="setVolume(80)">🔊 Cartão 3 - Volume 80%</div>
+    </div>
+
     <script>
         function send(action) {
-            fetch(`/api/${action}`, { method: 'POST' });
+            fetch(`/api/${action}`, { method: 'POST' })
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById('status').textContent = `Status: ${data.status || 'erro'}`;
+                })
+                .catch(() => {
+                    document.getElementById('status').textContent = 'Erro ao enviar comando';
+                });
         }
+
         function setVolume(level) {
-            fetch(`/api/volume?level=${level}`, { method: 'POST' });
+            fetch(`/api/volume?level=${level}`, { method: 'POST' })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.volume) {
+                        document.getElementById('status').textContent = `Volume: ${data.volume}%`;
+                    } else {
+                        document.getElementById('status').textContent = `Erro: ${data.error}`;
+                    }
+                })
+                .catch(() => {
+                    document.getElementById('status').textContent = 'Erro ao ajustar volume';
+                });
         }
+
+        function updateTrack() {
+            fetch('/api/track')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.title && data.artist) {
+                        document.getElementById('track-info').textContent =
+                            `${data.title} — ${data.artist}`;
+                    } else {
+                        document.getElementById('track-info').textContent = 'Nada tocando';
+                    }
+                })
+                .catch(() => {
+                    document.getElementById('track-info').textContent = 'Erro ao obter faixa';
+                });
+        }
+
+        setInterval(updateTrack, 5000); // Atualiza a cada 5 segundos
+        updateTrack(); // Chamada inicial
     </script>
 </body>
 </html>
