@@ -6,10 +6,11 @@ exec > >(tee -a "$LOGFILE") 2>&1
 echo "📄 Log de instalação iniciado em $(date)"
 
 echo "🎶 Jukebox RFID Setup"
-echo "1) Instalar sistema"
-echo "2) Reiniciar Raspberry Pi"
+echo "1) Instalação Completa"
+echo "2) Instalar Driver do Audio HAT (Opcional)"
 echo "3) Desinstalar Jukebox"
-read -p "Escolha uma opção [1-3]: " opcao
+echo "4) Reiniciar Raspberry Pi"
+read -p "Escolha uma opção [1-4]: " opcao
 
 if [ "$opcao" == "1" ]; then
     echo "🔧 Atualizando sistema..."
@@ -72,8 +73,17 @@ EOF
     echo "✅ Instalação concluída!"
 
 elif [ "$opcao" == "2" ]; then
-    echo "🔁 Reiniciando..."
-    sudo reboot
+    echo "🎧 Instalando driver do WM8960 Audio HAT..."
+    if [ -d "WM8960-Audio-HAT" ]; then
+        echo "⚠️  Diretório WM8960-Audio-HAT já existe. Pulando o clone."
+    else
+        git clone https://github.com/waveshare/WM8960-Audio-HAT.git || { echo "❌ Falha ao clonar repositório do driver"; exit 1; }
+    fi
+    cd WM8960-Audio-HAT
+    sudo ./install.sh
+    echo "✅ Driver do HAT instalado. É necessário reiniciar para aplicar as alterações."
+    echo "Use a opção 4 do menu para reiniciar."
+    cd ..
 
 elif [ "$opcao" == "3" ]; then
     echo "🧹 Removendo Jukebox..."
@@ -82,6 +92,10 @@ elif [ "$opcao" == "3" ]; then
     sudo rm /etc/systemd/system/jukebox.service
     sudo apt-get remove raspotify -y
     echo "❌ Jukebox removido."
+
+elif [ "$opcao" == "4" ]; then
+    echo "🔁 Reiniciando..."
+    sudo reboot
 
 else
     echo "⚠️ Opção inválida."
