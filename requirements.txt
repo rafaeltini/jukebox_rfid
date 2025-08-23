@@ -2,3 +2,4 @@ Flask
 qrcode
 mfrc522
 pygame
+Flask-SocketIO

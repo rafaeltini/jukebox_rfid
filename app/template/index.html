@@ -35,6 +35,12 @@
         <div id="upload-status"></div>
     </div>
 
+    <div class="rfid-test-container">
+        <h2 data-i18n-key="rfid_test_title">Teste de Cartão RFID</h2>
+        <div id="rfid-status" data-i18n-key="rfid_waiting">Aguardando um cartão...</div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
     <script>
         // --- Seletores de Elementos ---
         const ui = {
@@ -45,7 +51,8 @@
             fileInput: document.getElementById('file-input'),
             uploadStatus: document.getElementById('upload-status'),
             langPtBtn: document.getElementById('lang-pt'),
-            langEnBtn: document.getElementById('lang-en')
+            langEnBtn: document.getElementById('lang-en'),
+            rfidStatus: document.getElementById('rfid-status')
         };
 
         // --- Estado da Aplicação ---
@@ -92,8 +99,8 @@
         // --- Lógica da UI do Player ---
         function updatePlayerUI(status) {
             const trackText = status.current_song
-                ? translations[currentLang].now_playing + status.current_song
-                : translations[currentLang].nothing_playing;
+                ? (translations[currentLang]?.now_playing || 'Now playing: ') + status.current_song
+                : (translations[currentLang]?.nothing_playing || 'Silence...');
             ui.trackInfo.textContent = trackText;
 
             ui.playPauseBtn.textContent = (status.is_playing && !status.is_paused) ? '⏸️' : '▶️';
@@ -103,22 +110,38 @@
         // --- Lógica de Upload ---
         function handleFileUpload(file) {
             if (!file || file.type !== 'audio/mpeg') {
-                ui.uploadStatus.textContent = translations[currentLang].upload_status_invalid;
+                ui.uploadStatus.textContent = translations[currentLang]?.upload_status_invalid || 'Invalid file.';
                 return;
             }
-            ui.uploadStatus.textContent = translations[currentLang].upload_status_uploading + file.name + '...';
+            ui.uploadStatus.textContent = (translations[currentLang]?.upload_status_uploading || 'Uploading ') + file.name + '...';
             api.uploadFile(file).then(response => {
-                // A mensagem de sucesso/erro do backend já é em texto plano, não precisa de tradução aqui
-                // Mas podemos traduzir a parte genérica.
                 if (response.status === 'success') {
-                    ui.uploadStatus.textContent = `✅ ${file.name}` + translations[currentLang].upload_status_success;
+                    ui.uploadStatus.textContent = `✅ ${file.name} ` + (translations[currentLang]?.upload_status_success || 'saved. Scan a card to associate.');
                 } else {
-                    ui.uploadStatus.textContent = `❌ ` + translations[currentLang].upload_status_error;
+                    ui.uploadStatus.textContent = `❌ ` + (translations[currentLang]?.upload_status_error || 'Upload error.');
                 }
                 setTimeout(api.getStatus, 1500).then(updatePlayerUI);
             }).catch(err => {
-                ui.uploadStatus.textContent = '❌ ' + translations[currentLang].upload_status_error;
+                ui.uploadStatus.textContent = '❌ ' + (translations[currentLang]?.upload_status_error || 'Upload error.');
                 console.error(err);
+            });
+        }
+
+        // --- Lógica do WebSocket ---
+        function setupSocketListeners() {
+            const socket = io();
+
+            socket.on('connect', () => {
+                console.log('Conectado ao servidor WebSocket! / Connected to WebSocket server!');
+            });
+
+            socket.on('rfid_scan', (data) => {
+                console.log('Evento rfid_scan recebido:', data);
+                const statusText = data.associated
+                    ? (translations[currentLang]?.rfid_associated || 'Associated')
+                    : (translations[currentLang]?.rfid_not_associated || 'Not Associated');
+
+                ui.rfidStatus.innerHTML = `<strong>UID:</strong> ${data.uid}<br><strong>Status:</strong> ${statusText}`;
             });
         }
 
@@ -149,6 +172,7 @@
             try {
                 translations = await api.getTranslations();
                 setLanguage(currentLang);
+                setupSocketListeners(); // Configura os listeners do WebSocket
                 setInterval(() => api.getStatus().then(updatePlayerUI), 3000);
             } catch (error) {
                 console.error("Falha ao inicializar a aplicação:", error);

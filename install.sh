@@ -14,10 +14,10 @@ read -p "Escolha uma opção [1-3]: " opcao
 if [ "$opcao" == "1" ]; then
     echo "🔧 Atualizando sistema..."
     sudo rm -f /var/lib/dpkg/lock-frontend /var/lib/dpkg/lock /var/cache/apt/archives/lock
-    sudo apt-get update && \
-    sudo apt-get -o Dpkg::Options::="--force-confdef" \
-                 -o Dpkg::Options::="--force-confold" \
-                 upgrade -y || { echo "❌ Falha ao atualizar sistema"; exit 1; }
+    sudo apt-get update || { echo "❌ Falha ao atualizar sistema"; exit 1; }
+    sudo DEBIAN_FRONTEND=noninteractive apt-get upgrade -y \
+        -o Dpkg::Options::="--force-confdef" \
+        -o Dpkg::Options::="--force-confold" || { echo "❌ Falha ao atualizar sistema"; exit 1; }
 
     echo "📦 Atualizando repositório..."
     git pull origin master || { echo "❌ Falha ao atualizar repositório"; exit 1; }
