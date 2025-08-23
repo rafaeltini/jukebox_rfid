@@ -53,8 +53,8 @@ Description=Jukebox RFID Web Server
 After=network.target
 
 [Service]
-ExecStart=$SCRIPT_DIR/venv/bin/python3 $SCRIPT_DIR/app/main.py
-WorkingDirectory=$SCRIPT_DIR/app
+WorkingDirectory=$SCRIPT_DIR
+ExecStart=$SCRIPT_DIR/venv/bin/python3 -m app.main
 Restart=always
 User=pi
 
