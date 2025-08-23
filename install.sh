@@ -23,6 +23,9 @@ if [ "$opcao" == "1" ]; then
     echo "📦 Atualizando repositório..."
     git pull origin master || { echo "❌ Falha ao atualizar repositório"; exit 1; }
 
+    echo "⚙️ Habilitando interface SPI..."
+    sudo raspi-config nonint do_spi 0 || { echo "❌ Falha ao habilitar SPI"; exit 1; }
+
     echo "🐍 Instalando dependências Python..."
     sudo apt-get -o Dpkg::Options::="--force-confdef" \
                  -o Dpkg::Options::="--force-confold" \
