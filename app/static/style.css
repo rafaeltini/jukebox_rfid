@@ -60,7 +60,7 @@ h2 {
 
 
 /* --- Container do Player --- */
-.player-container, .upload-container {
+.player-container, .upload-container, .rfid-test-container {
     background-color: #1e1e1e;
     border-radius: 12px;
     padding: 25px;
@@ -149,8 +149,161 @@ input[type="range"] {
     h1 {
         font-size: 2em;
     }
-    .player-container, .upload-container {
+    .player-container, .upload-container, .rfid-test-container, .library-container, .tags-container {
         width: 95%;
         padding: 20px;
     }
+}
+
+/* --- Navegação --- */
+.navigation {
+    display: flex;
+    gap: 15px;
+    background-color: #282828;
+    padding: 10px 20px;
+    border-radius: 50px;
+    margin-bottom: 20px;
+}
+
+.nav-link {
+    color: #fff;
+    text-decoration: none;
+    font-weight: bold;
+    padding: 8px 15px;
+    border-radius: 20px;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.nav-link:hover {
+    background-color: #3a3a3a;
+}
+
+.nav-link.active {
+    background-color: #1DB954;
+    color: #fff;
+}
+
+/* --- Estrutura das Páginas --- */
+.page {
+    display: none; /* Oculto por padrão */
+    width: 100%;
+    flex-direction: column;
+    align-items: center;
+    gap: 30px;
+}
+
+.page.active {
+    display: flex; /* Visível quando ativo */
+}
+
+/* --- Estilos para as Novas Páginas --- */
+.library-container, .tags-container {
+    background-color: #1e1e1e;
+    border-radius: 12px;
+    padding: 25px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    text-align: left;
+}
+
+#song-list, #tag-list {
+    list-style: none;
+    padding: 0;
+}
+
+#song-list li {
+    padding: 10px;
+    border-bottom: 1px solid #333;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+#song-list li:last-child {
+    border-bottom: none;
+}
+
+.play-song-btn {
+    background-color: #1DB954;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 5px 10px;
+    cursor: pointer;
+    font-size: 0.8em;
+    transition: background-color 0.2s;
+}
+
+.play-song-btn:hover {
+    background-color: #1ed760;
+}
+
+/* --- Tabela de Tags --- */
+.tag-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+.tag-table th, .tag-table td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #333;
+    text-align: left;
+}
+
+.tag-table th {
+    background-color: #282828;
+    color: #1DB954;
+    font-size: 1.1em;
+}
+
+.tag-table tbody tr:hover {
+    background-color: #2a2a2a;
+}
+
+.delete-btn {
+    background-color: #c9302c; /* Vermelho escuro */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 5px 10px;
+    cursor: pointer;
+    font-size: 0.8em;
+    transition: background-color 0.2s;
+}
+
+.delete-btn:hover {
+    background-color: #d9534f; /* Vermelho mais claro */
+}
+
+.song-controls {
+    display: flex;
+    gap: 10px;
+}
+
+.tag-label {
+    color: #1DB954; /* Verde */
+    font-size: 0.9em;
+}
+
+.no-tag-label {
+    color: #aaa; /* Cinza */
+    font-size: 0.9em;
+    font-style: italic;
+}
+
+.assign-btn {
+    background-color: #f0ad4e; /* Laranja */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 5px 10px;
+    cursor: pointer;
+    font-size: 0.8em;
+    transition: background-color 0.2s;
+}
+
+.assign-btn:hover {
+    background-color: #ec971f;
 }

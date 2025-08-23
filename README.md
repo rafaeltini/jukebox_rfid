@@ -20,14 +20,29 @@ Este projeto transforma um Raspberry Pi em uma Jukebox de MP3 controlada por car
 - **Instalação Automatizada:** O script `install.sh` configura todas as dependências de software, incluindo `pygame` para áudio e as bibliotecas GPIO.
 - **Serviço Autônomo:** Roda como um serviço de fundo (`systemd`) que inicia automaticamente com o Raspberry Pi.
 
-### ✅ Requisitos de Hardware
+### 📦 Componentes e Dependências
 
-- **Raspberry Pi:** Testado com Pi 2 W, mas deve funcionar em modelos mais recentes.
-- **Leitor RFID:** Leitor RC522 conectado via SPI.
-- **Cartões/Tags RFID:** Compatíveis com o leitor RC522 (ex: MIFARE Classic).
-- **Saída de Áudio:**
-    - A saída de áudio padrão do Pi (3.5mm ou HDMI).
-    - Ou um DAC HAT, como o **Waveshare HiFi DAC HAT**.
+Esta seção detalha o hardware e o software necessários para o projeto.
+
+#### Componentes de Hardware
+
+- **Raspberry Pi:** O cérebro da operação. Testado no Raspberry Pi 2 W, mas qualquer modelo mais recente com Wi-Fi e pinos GPIO deve funcionar.
+- **Leitor RFID MFRC522:** Um leitor de baixo custo para cartões e tags de 13.56MHz. É a interface física para selecionar as músicas.
+- **Cartões ou Tags RFID:** Qualquer cartão compatível com o padrão MIFARE Classic. Você precisará de um para cada música ou playlist que desejar adicionar.
+- **Cartão MicroSD:** Para o sistema operacional e armazenamento das músicas. Um cartão de 16GB ou mais é recomendado.
+- **Fonte de Alimentação:** Uma fonte de alimentação USB-C ou Micro USB de boa qualidade, apropriada para o seu modelo de Raspberry Pi.
+- **Alto-falantes ou Fones de Ouvido:** Para ouvir a música. Podem ser conectados à saída de áudio de 3.5mm do Pi.
+
+#### Dependências de Software
+
+O projeto utiliza as seguintes bibliotecas Python, que são instaladas automaticamente pelo script `install.sh`:
+
+- **Flask:** Um micro-framework web usado para criar o servidor que hospeda a interface de usuário.
+- **Flask-SocketIO:** Fornece comunicação em tempo real entre o servidor e a interface web, essencial para atualizar o status do player e do leitor RFID instantaneamente.
+- **pygame:** Uma biblioteca multimídia usada here para tocar os arquivos de áudio MP3 de forma eficiente.
+- **mfrc522:** Uma biblioteca Python de baixo nível para se comunicar com o leitor de RFID MFRC522 através da interface SPI do Raspberry Pi.
+- **qrcode[pil]:** Usado para gerar o QR code que facilita o acesso à interface web. A opção `[pil]` garante que a biblioteca de manipulação de imagens `Pillow` seja instalada junto.
+- **zeroconf:** Permite que a Jukebox anuncie sua presença na rede local como `rfidbox.local` usando o protocolo mDNS (Bonjour/Avahi), eliminando a necessidade de saber o endereço IP do dispositivo.
 
 ### 🔧 Configuração do Hardware
 
@@ -47,8 +62,24 @@ Conecte o leitor ao Raspberry Pi usando os seguintes pinos GPIO:
 
 **Importante:** A biblioteca RFID usada neste projeto não utiliza o pino `RST`. Ele pode ser deixado desconectado.
 
-#### Nota sobre o Waveshare HiFi HAT
-Este projeto usa o `pygame.mixer` para controlar o áudio, que por sua vez usa o sistema ALSA no Linux. O controle de volume na interface web **não** usa `amixer` e deve funcionar com qualquer dispositivo de saída padrão. Se você precisar de controle de volume via linha de comando, pode precisar identificar o nome do controle do seu HAT com o comando `amixer` e ajustar os scripts conforme necessário.
+#### Opcional: Configuração do Waveshare WM8960 Audio HAT
+
+Se você estiver usando o **WM8960 Audio HAT** para uma qualidade de áudio superior, ele precisa de um driver específico para funcionar.
+
+1.  **Instale o Driver do HAT:** No terminal do seu Raspberry Pi, execute os seguintes comandos para baixar e instalar o driver da Waveshare.
+    ```bash
+    git clone https://github.com/waveshare/WM8960-Audio-HAT.git
+    cd WM8960-Audio-HAT
+    sudo ./install.sh
+    ```
+2.  **Reinicie o Pi:** Após a instalação, o sistema precisa ser reiniciado para que o novo driver de áudio seja carregado.
+    ```bash
+    sudo reboot
+    ```
+3.  **Verificação (Opcional):** Após reiniciar, você pode verificar se a nova placa de som foi detectada com o comando `aplay -l`. Você deverá ver um dispositivo chamado `wm8960-soundcard`.
+4.  **Controle de Volume:** O volume do HAT pode ser controlado pelo sistema usando o `alsamixer`. A interface web deste projeto controlará o volume da aplicação (`pygame`), que por sua vez usa o dispositivo de som padrão do sistema (que agora será o HAT).
+
+**Nota Importante:** As instruções de instalação do driver podem variar dependendo da sua versão do Kernel ou do Raspberry Pi OS. Se encontrar problemas, consulte a [wiki oficial da Waveshare](https://www.waveshare.com/wiki/WM8960_Audio_HAT) para obter informações de troubleshooting e compatibilidade.
 
 ### 🚀 Guia de Instalação Completo
 
@@ -148,14 +179,29 @@ This project transforms a Raspberry Pi into an MP3 Jukebox controlled by RFID ca
 - **Automated Installation:** The `install.sh` script configures all software dependencies, including `pygame` for audio and GPIO libraries.
 - **Standalone Service:** Runs as a background service (`systemd`) that starts automatically with the Raspberry Pi.
 
-### ✅ Hardware Requirements
+### 📦 Components and Dependencies
 
-- **Raspberry Pi:** Tested on Pi 2 W, but should work on newer models.
-- **RFID Reader:** RC522 reader connected via SPI.
-- **RFID Cards/Tags:** Compatible with the RC522 reader (e.g., MIFARE Classic).
-- **Audio Output:**
-    - The standard Pi audio output (3.5mm or HDMI).
-    - Or a DAC HAT, such as the **Waveshare HiFi DAC HAT**.
+This section details the hardware and software required for the project.
+
+#### Hardware Components
+
+- **Raspberry Pi:** The brains of the operation. Tested on a Raspberry Pi 2 W, but any newer model with Wi-Fi and GPIO pins should work.
+- **MFRC522 RFID Reader:** A low-cost reader for 13.56MHz cards and tags. It's the physical interface for selecting music.
+- **RFID Cards or Tags:** Any card compatible with the MIFARE Classic standard. You will need one for each song or playlist you want to add.
+- **MicroSD Card:** For the operating system and music storage. A 16GB card or larger is recommended.
+- **Power Supply:** A good quality USB-C or Micro USB power supply, appropriate for your Raspberry Pi model.
+- **Speakers or Headphones:** To listen to the music. They can be connected to the Pi's 3.5mm audio jack.
+
+#### Software Dependencies
+
+The project uses the following Python libraries, which are automatically installed by the `install.sh` script:
+
+- **Flask:** A web micro-framework used to create the server that hosts the user interface.
+- **Flask-SocketIO:** Provides real-time communication between the server and the web interface, essential for instantly updating the player and RFID reader status.
+- **pygame:** A multimedia library used here to efficiently play MP3 audio files.
+- **mfrc522:** A low-level Python library for communicating with the MFRC522 RFID reader via the Raspberry Pi's SPI interface.
+- **qrcode[pil]:** Used to generate the QR code that provides easy access to the web interface. The `[pil]` option ensures the `Pillow` image manipulation library is installed along with it.
+- **zeroconf:** Allows the Jukebox to announce its presence on the local network as `rfidbox.local` using the mDNS (Bonjour/Avahi) protocol, eliminating the need to know the device's IP address.
 
 ### 🔧 Hardware Setup
 
@@ -175,8 +221,24 @@ Connect the reader to the Raspberry Pi using the following GPIO pins:
 
 **Important:** The RFID library used in this project does not utilize the `RST` pin. It can be left disconnected.
 
-#### Note on the Waveshare HiFi HAT
-This project uses `pygame.mixer` to control audio, which in turn uses the ALSA system on Linux. The volume control in the web interface does **not** use `amixer` and should work with any standard output device. If you need command-line volume control, you may need to identify your HAT's mixer control name with the `amixer` command and adjust scripts accordingly.
+#### Optional: Waveshare WM8960 Audio HAT Setup
+
+If you are using the **WM8960 Audio HAT** for superior audio quality, it requires a specific driver to function.
+
+1.  **Install the HAT Driver:** In your Raspberry Pi terminal, run the following commands to download and install the Waveshare driver.
+    ```bash
+    git clone https://github.com/waveshare/WM8960-Audio-HAT.git
+    cd WM8960-Audio-HAT
+    sudo ./install.sh
+    ```
+2.  **Reboot the Pi:** After the installation, the system must be rebooted for the new audio driver to be loaded.
+    ```bash
+    sudo reboot
+    ```
+3.  **Verification (Optional):** After rebooting, you can check if the new sound card was detected with the command `aplay -l`. You should see a device named `wm8960-soundcard`.
+4.  **Volume Control:** The HAT's system volume can be controlled using `alsamixer`. This project's web interface will control the application volume (`pygame`), which in turn uses the system's default sound device (which will now be the HAT).
+
+**Important Note:** The driver installation instructions may vary depending on your Kernel or Raspberry Pi OS version. If you encounter issues, please refer to the [official Waveshare wiki](https://www.waveshare.com/wiki/WM8960_Audio_HAT) for troubleshooting and compatibility information.
 
 ### 🚀 Complete Installation Guide
 

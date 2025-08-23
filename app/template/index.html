@@ -14,33 +14,62 @@
         </div>
     </div>
 
-    <div class="player-container">
-        <h2 data-i18n-key="player_title">Player</h2>
-        <div id="track-info" data-i18n-key="nothing_playing">Silêncio...</div>
-        <div class="controls">
-            <button id="play-pause-btn">▶️</button>
-            <div class="volume-control">
-                <label for="volume">🔊</label>
-                <input type="range" id="volume" min="0" max="100" value="50">
+    <nav class="navigation">
+        <a href="#" class="nav-link active" data-page="player" data-i18n-key="nav_player">Player</a>
+        <a href="#" class="nav-link" data-page="library" data-i18n-key="nav_library">Biblioteca</a>
+        <a href="#" class="nav-link" data-page="tags" data-i18n-key="nav_tags">Tags</a>
+        <a href="#" class="nav-link" data-page="test" data-i18n-key="nav_test">Teste RFID</a>
+    </nav>
+
+    <main id="page-player" class="page active">
+        <div class="player-container">
+            <h2 data-i18n-key="player_title">Player</h2>
+            <div id="track-info" data-i18n-key="nothing_playing">Silêncio...</div>
+            <div class="controls">
+                <button id="play-pause-btn">▶️</button>
+                <div class="volume-control">
+                    <label for="volume">🔊</label>
+                    <input type="range" id="volume" min="0" max="100" value="50">
+                </div>
             </div>
         </div>
-    </div>
+    </main>
 
-    <div class="upload-container">
-        <h2 data-i18n-key="upload_title">Adicionar Nova Música</h2>
-        <div id="drop-zone">
-            <p data-i18n-key="drop_zone_text">Arraste um arquivo MP3 aqui ou clique para selecionar</p>
-            <input type="file" id="file-input" accept=".mp3" style="display: none;">
+    <main id="page-library" class="page" style="display: none;">
+        <div class="upload-container">
+            <h2 data-i18n-key="upload_title">Adicionar Nova Música (Teste)</h2>
+            <div id="drop-zone">
+                <p data-i18n-key="drop_zone_text">Arraste um arquivo MP3 aqui ou clique para selecionar</p>
+                <input type="file" id="file-input" accept=".mp3" style="display: none;">
+            </div>
+            <div id="upload-status"></div>
         </div>
-        <div id="upload-status"></div>
-    </div>
 
-    <div class="rfid-test-container">
-        <h2 data-i18n-key="rfid_test_title">Teste de Cartão RFID</h2>
-        <div id="rfid-status" data-i18n-key="rfid_waiting">Aguardando um cartão...</div>
-    </div>
+        <div class="library-container">
+            <h2 data-i18n-key="library_title">Biblioteca de Músicas</h2>
+            <ul id="song-list">
+                <!-- A lista de músicas será inserida aqui pelo JavaScript -->
+            </ul>
+        </div>
+    </main>
 
-    <script src="/socket.io/socket.io.js"></script>
+    <main id="page-tags" class="page" style="display: none;">
+        <div class="tags-container">
+            <h2 data-i18n-key="tags_title">Gerenciamento de Tags</h2>
+            <div id="tag-list">
+                <!-- A lista de associações de tags será inserida aqui pelo JavaScript -->
+            </div>
+        </div>
+    </main>
+
+    <main id="page-test" class="page" style="display: none;">
+        <div class="rfid-test-container">
+            <h2 data-i18n-key="rfid_test_title">Teste de Cartão RFID</h2>
+            <div id="rfid-status" data-i18n-key="rfid_waiting">Aguardando um cartão...</div>
+        </div>
+    </main>
+
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
     <script>
         // --- Seletores de Elementos ---
         const ui = {
@@ -63,7 +92,15 @@
         const api = {
             getTranslations: () => fetch('/api/translations').then(res => res.json()),
             getStatus: () => fetch('/api/status').then(res => res.json()),
+            getLibrary: () => fetch('/api/library').then(res => res.json()),
+            deleteAssociation: (tagId) => fetch(`/api/association/${tagId}`, { method: 'DELETE' }).then(res => res.json()),
+            initiateAssociation: (filename) => fetch('/api/initiate_association', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ filename })
+            }).then(res => res.json()),
             togglePlayPause: () => fetch('/api/play_pause', { method: 'POST' }).then(res => res.json()),
+            playSong: (filename) => fetch(`/api/play/${filename}`, { method: 'POST' }).then(res => res.json()),
             setVolume: (level) => fetch('/api/volume', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -116,14 +153,169 @@
             ui.uploadStatus.textContent = (translations[currentLang]?.upload_status_uploading || 'Uploading ') + file.name + '...';
             api.uploadFile(file).then(response => {
                 if (response.status === 'success') {
-                    ui.uploadStatus.textContent = `✅ ${file.name} ` + (translations[currentLang]?.upload_status_success || 'saved. Scan a card to associate.');
+                    ui.uploadStatus.textContent = `✅ ${response.message}`;
+                    // Atualiza a lista de músicas na biblioteca após o upload.
+                    api.getLibrary().then(renderLibrary);
                 } else {
-                    ui.uploadStatus.textContent = `❌ ` + (translations[currentLang]?.upload_status_error || 'Upload error.');
+                    ui.uploadStatus.textContent = `❌ ${response.message}`;
                 }
-                setTimeout(api.getStatus, 1500).then(updatePlayerUI);
             }).catch(err => {
-                ui.uploadStatus.textContent = '❌ ' + (translations[currentLang]?.upload_status_error || 'Upload error.');
+                ui.uploadStatus.textContent = '❌ ' + (translations[currentLang]?.upload_status_error_generic || 'An error occurred during upload.');
                 console.error(err);
+            });
+        }
+
+        // --- Lógica de Renderização das Páginas ---
+        function renderLibrary(library) {
+            const songList = document.getElementById('song-list');
+            songList.innerHTML = ''; // Limpa a lista antiga
+
+            if (!library.songs || library.songs.length === 0) {
+                songList.innerHTML = `<li>${translations[currentLang]?.library_empty || 'Nenhuma música encontrada.'}</li>`;
+                return;
+            }
+
+            // Inverte o mapa de associações para fácil busca (música -> tag)
+            const songToTagMap = Object.entries(library.associations).reduce((acc, [tag, song]) => {
+                acc[song] = tag;
+                return acc;
+            }, {});
+
+            library.songs.forEach(song => {
+                const li = document.createElement('li');
+
+                const songInfo = document.createElement('span');
+                const associatedTag = songToTagMap[song];
+                if (associatedTag) {
+                    songInfo.innerHTML = `${song} <span class="tag-label">(${translations[currentLang]?.song_tag_label || 'Tag'}: ${associatedTag})</span>`;
+                } else {
+                    songInfo.innerHTML = `${song} <span class="no-tag-label">(${translations[currentLang]?.song_no_tag_label || 'Sem Tag'})</span>`;
+                }
+
+                const controlsDiv = document.createElement('div');
+                controlsDiv.className = 'song-controls';
+
+                const playButton = document.createElement('button');
+                playButton.textContent = '▶️';
+                playButton.className = 'play-song-btn';
+                playButton.onclick = () => {
+                    api.playSong(song).then(response => {
+                        console.log(response);
+                        setTimeout(() => api.getStatus().then(updatePlayerUI), 500);
+                    });
+                };
+
+                const assignButton = document.createElement('button');
+                assignButton.className = 'assign-btn';
+                assignButton.textContent = associatedTag ? (translations[currentLang]?.btn_change_tag || 'Mudar Tag') : (translations[currentLang]?.btn_assign_tag || 'Associar Tag');
+                assignButton.onclick = () => {
+                    api.initiateAssociation(song).then(response => {
+                        if (response.status === 'success') {
+                            // Mostra a mensagem no status de upload, que é uma área de status global
+                            ui.uploadStatus.textContent = `⏳ ${response.message}`;
+                            // Leva o usuário de volta para a página de teste de RFID para que ele possa ver o status
+                            document.querySelector('.nav-link[data-page="test"]').click();
+                        } else {
+                            ui.uploadStatus.textContent = `❌ ${response.message}`;
+                        }
+                    });
+                };
+
+                controlsDiv.appendChild(playButton);
+                controlsDiv.appendChild(assignButton);
+                li.appendChild(songInfo);
+                li.appendChild(controlsDiv);
+                songList.appendChild(li);
+            });
+        }
+
+        function renderTags(library) {
+            const tagList = document.getElementById('tag-list');
+            tagList.innerHTML = ''; // Limpa a lista antiga
+
+            const associations = library.associations;
+            if (!associations || Object.keys(associations).length === 0) {
+                tagList.innerHTML = `<p>${translations[currentLang]?.tags_empty || 'Nenhuma tag associada encontrada.'}</p>`;
+                return;
+            }
+
+            const table = document.createElement('table');
+            table.className = 'tag-table';
+            table.innerHTML = `
+                <thead>
+                    <tr>
+                        <th>${translations[currentLang]?.table_header_tag || 'Cartão RFID (UID)'}</th>
+                        <th>${translations[currentLang]?.table_header_song || 'Música Associada'}</th>
+                        <th>${translations[currentLang]?.table_header_actions || 'Ações'}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            `;
+            const tbody = table.querySelector('tbody');
+
+            for (const tagId in associations) {
+                const song = associations[tagId];
+                const row = document.createElement('tr');
+
+                const cellTag = document.createElement('td');
+                cellTag.textContent = tagId;
+
+                const cellSong = document.createElement('td');
+                cellSong.textContent = song;
+
+                const cellActions = document.createElement('td');
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = translations[currentLang]?.btn_delete || 'Deletar';
+                deleteButton.className = 'delete-btn';
+                deleteButton.onclick = () => {
+                    if (confirm((translations[currentLang]?.confirm_delete || 'Tem certeza que deseja deletar a associação para a tag') + ` ${tagId}?`)) {
+                        api.deleteAssociation(tagId).then(response => {
+                            console.log(response);
+                            // Recarrega a lista de tags para mostrar a mudança
+                            api.getLibrary().then(renderTags);
+                        });
+                    }
+                };
+                cellActions.appendChild(deleteButton);
+
+                row.appendChild(cellTag);
+                row.appendChild(cellSong);
+                row.appendChild(cellActions);
+                tbody.appendChild(row);
+            }
+
+            tagList.appendChild(table);
+        }
+
+        // --- Lógica de Navegação ---
+        function setupNavigation() {
+            const navLinks = document.querySelectorAll('.nav-link');
+            const pages = document.querySelectorAll('.page');
+
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const pageId = link.getAttribute('data-page');
+
+                    pages.forEach(page => page.classList.remove('active'));
+                    navLinks.forEach(navLink => navLink.classList.remove('active'));
+
+                    document.getElementById(`page-${pageId}`).classList.add('active');
+                    link.classList.add('active');
+
+                    // Carrega o conteúdo da página clicada
+                    if (pageId === 'library' || pageId === 'tags') {
+                        api.getLibrary().then(library => {
+                            if (pageId === 'library') {
+                                renderLibrary(library);
+                            }
+                            if (pageId === 'tags') {
+                                renderTags(library);
+                            }
+                        });
+                    }
+                });
             });
         }
 
@@ -172,6 +364,7 @@
             try {
                 translations = await api.getTranslations();
                 setLanguage(currentLang);
+                setupNavigation();
                 setupSocketListeners(); // Configura os listeners do WebSocket
                 setInterval(() => api.getStatus().then(updatePlayerUI), 3000);
             } catch (error) {
