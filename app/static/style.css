@@ -276,3 +276,34 @@ input[type="range"] {
 .delete-btn:hover {
     background-color: #d9534f; /* Vermelho mais claro */
 }
+
+.song-controls {
+    display: flex;
+    gap: 10px;
+}
+
+.tag-label {
+    color: #1DB954; /* Verde */
+    font-size: 0.9em;
+}
+
+.no-tag-label {
+    color: #aaa; /* Cinza */
+    font-size: 0.9em;
+    font-style: italic;
+}
+
+.assign-btn {
+    background-color: #f0ad4e; /* Laranja */
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 5px 10px;
+    cursor: pointer;
+    font-size: 0.8em;
+    transition: background-color 0.2s;
+}
+
+.assign-btn:hover {
+    background-color: #ec971f;
+}

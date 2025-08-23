@@ -18,6 +18,7 @@
         <a href="#" class="nav-link active" data-page="player" data-i18n-key="nav_player">Player</a>
         <a href="#" class="nav-link" data-page="library" data-i18n-key="nav_library">Biblioteca</a>
         <a href="#" class="nav-link" data-page="tags" data-i18n-key="nav_tags">Tags</a>
+        <a href="#" class="nav-link" data-page="test" data-i18n-key="nav_test">Teste RFID</a>
     </nav>
 
     <main id="page-player" class="page active">
@@ -32,7 +33,9 @@
                 </div>
             </div>
         </div>
+    </main>
 
+    <main id="page-library" class="page" style="display: none;">
         <div class="upload-container">
             <h2 data-i18n-key="upload_title">Adicionar Nova Música</h2>
             <div id="drop-zone">
@@ -42,13 +45,6 @@
             <div id="upload-status"></div>
         </div>
 
-        <div class="rfid-test-container">
-            <h2 data-i18n-key="rfid_test_title">Teste de Cartão RFID</h2>
-            <div id="rfid-status" data-i18n-key="rfid_waiting">Aguardando um cartão...</div>
-        </div>
-    </main>
-
-    <main id="page-library" class="page" style="display: none;">
         <div class="library-container">
             <h2 data-i18n-key="library_title">Biblioteca de Músicas</h2>
             <ul id="song-list">
@@ -63,6 +59,13 @@
             <div id="tag-list">
                 <!-- A lista de associações de tags será inserida aqui pelo JavaScript -->
             </div>
+        </div>
+    </main>
+
+    <main id="page-test" class="page" style="display: none;">
+        <div class="rfid-test-container">
+            <h2 data-i18n-key="rfid_test_title">Teste de Cartão RFID</h2>
+            <div id="rfid-status" data-i18n-key="rfid_waiting">Aguardando um cartão...</div>
         </div>
     </main>
 
@@ -91,6 +94,11 @@
             getStatus: () => fetch('/api/status').then(res => res.json()),
             getLibrary: () => fetch('/api/library').then(res => res.json()),
             deleteAssociation: (tagId) => fetch(`/api/association/${tagId}`, { method: 'DELETE' }).then(res => res.json()),
+            initiateAssociation: (filename) => fetch('/api/initiate_association', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ filename })
+            }).then(res => res.json()),
             togglePlayPause: () => fetch('/api/play_pause', { method: 'POST' }).then(res => res.json()),
             playSong: (filename) => fetch(`/api/play/${filename}`, { method: 'POST' }).then(res => res.json()),
             setVolume: (level) => fetch('/api/volume', {
@@ -145,13 +153,14 @@
             ui.uploadStatus.textContent = (translations[currentLang]?.upload_status_uploading || 'Uploading ') + file.name + '...';
             api.uploadFile(file).then(response => {
                 if (response.status === 'success') {
-                    ui.uploadStatus.textContent = `✅ ${file.name} ` + (translations[currentLang]?.upload_status_success || 'saved. Scan a card to associate.');
+                    ui.uploadStatus.textContent = `✅ ${response.message}`;
+                    // Atualiza a lista de músicas na biblioteca após o upload.
+                    api.getLibrary().then(renderLibrary);
                 } else {
-                    ui.uploadStatus.textContent = `❌ ` + (translations[currentLang]?.upload_status_error || 'Upload error.');
+                    ui.uploadStatus.textContent = `❌ ${response.message}`;
                 }
-                setTimeout(() => { api.getStatus().then(updatePlayerUI); }, 1500);
             }).catch(err => {
-                ui.uploadStatus.textContent = '❌ ' + (translations[currentLang]?.upload_status_error || 'Upload error.');
+                ui.uploadStatus.textContent = '❌ ' + (translations[currentLang]?.upload_status_error_generic || 'An error occurred during upload.');
                 console.error(err);
             });
         }
@@ -166,9 +175,25 @@
                 return;
             }
 
+            // Inverte o mapa de associações para fácil busca (música -> tag)
+            const songToTagMap = Object.entries(library.associations).reduce((acc, [tag, song]) => {
+                acc[song] = tag;
+                return acc;
+            }, {});
+
             library.songs.forEach(song => {
                 const li = document.createElement('li');
-                li.textContent = song;
+
+                const songInfo = document.createElement('span');
+                const associatedTag = songToTagMap[song];
+                if (associatedTag) {
+                    songInfo.innerHTML = `${song} <span class="tag-label">(${translations[currentLang]?.song_tag_label || 'Tag'}: ${associatedTag})</span>`;
+                } else {
+                    songInfo.innerHTML = `${song} <span class="no-tag-label">(${translations[currentLang]?.song_no_tag_label || 'Sem Tag'})</span>`;
+                }
+
+                const controlsDiv = document.createElement('div');
+                controlsDiv.className = 'song-controls';
 
                 const playButton = document.createElement('button');
                 playButton.textContent = '▶️';
@@ -176,12 +201,30 @@
                 playButton.onclick = () => {
                     api.playSong(song).then(response => {
                         console.log(response);
-                        // Opcional: atualizar o status do player imediatamente
                         setTimeout(() => api.getStatus().then(updatePlayerUI), 500);
                     });
                 };
 
-                li.appendChild(playButton);
+                const assignButton = document.createElement('button');
+                assignButton.className = 'assign-btn';
+                assignButton.textContent = associatedTag ? (translations[currentLang]?.btn_change_tag || 'Mudar Tag') : (translations[currentLang]?.btn_assign_tag || 'Associar Tag');
+                assignButton.onclick = () => {
+                    api.initiateAssociation(song).then(response => {
+                        if (response.status === 'success') {
+                            // Mostra a mensagem no status de upload, que é uma área de status global
+                            ui.uploadStatus.textContent = `⏳ ${response.message}`;
+                            // Leva o usuário de volta para a página de teste de RFID para que ele possa ver o status
+                            document.querySelector('.nav-link[data-page="test"]').click();
+                        } else {
+                            ui.uploadStatus.textContent = `❌ ${response.message}`;
+                        }
+                    });
+                };
+
+                controlsDiv.appendChild(playButton);
+                controlsDiv.appendChild(assignButton);
+                li.appendChild(songInfo);
+                li.appendChild(controlsDiv);
                 songList.appendChild(li);
             });
         }
