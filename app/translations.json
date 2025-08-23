@@ -1,0 +1,26 @@
+{
+    "pt": {
+        "title": "🎶 Jukebox RFID MP3",
+        "player_title": "Player",
+        "upload_title": "Adicionar Nova Música",
+        "now_playing": "Tocando: ",
+        "nothing_playing": "Silêncio...",
+        "drop_zone_text": "Arraste um arquivo MP3 aqui ou clique para selecionar",
+        "upload_status_uploading": "Enviando ",
+        "upload_status_error": "Erro no envio.",
+        "upload_status_success": " salvo. Aproxime um cartão para associar.",
+        "upload_status_invalid": "Por favor, selecione um arquivo MP3."
+    },
+    "en": {
+        "title": "🎶 RFID MP3 Jukebox",
+        "player_title": "Player",
+        "upload_title": "Add New Song",
+        "now_playing": "Now Playing: ",
+        "nothing_playing": "Silence...",
+        "drop_zone_text": "Drag & drop an MP3 file here or click to select",
+        "upload_status_uploading": "Uploading ",
+        "upload_status_error": "Upload error.",
+        "upload_status_success": " saved. Scan a card to associate.",
+        "upload_status_invalid": "Please select an MP3 file."
+    }
+}

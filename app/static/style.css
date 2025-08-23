@@ -25,6 +25,40 @@ h2 {
     margin-bottom: 20px;
 }
 
+.header {
+    width: 90%;
+    max-width: 500px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+}
+
+.lang-switcher {
+    position: absolute;
+    right: 0;
+    top: 0;
+    cursor: pointer;
+    display: flex;
+    gap: 10px;
+}
+
+.lang-switcher span {
+    font-size: 1.5em;
+    opacity: 0.5;
+    transition: opacity 0.2s;
+}
+
+.lang-switcher span:hover {
+    opacity: 1;
+}
+
+.lang-switcher span.active {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+
 /* --- Container do Player --- */
 .player-container, .upload-container {
     background-color: #1e1e1e;
