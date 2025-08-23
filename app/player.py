@@ -50,20 +50,29 @@ class Player:
 
     def toggle_play_pause(self):
         """
-        PT: Alterna entre tocar e pausar a música atual.
-        EN: Toggles between playing and pausing the current song.
+        PT: Alterna entre tocar e pausar. Se nenhuma música estiver tocando mas uma
+            faixa estiver carregada, ela será tocada desde o início.
+        EN: Toggles between play and pause. If no music is playing but a
+            track is loaded, it will be played from the beginning.
         """
-        if not self.is_playing:
-            return
+        # PT: Atualiza o status de is_playing primeiro para ter o estado mais recente.
+        # EN: Update the is_playing status first to get the latest state.
+        self.is_playing = pygame.mixer.music.get_busy()
 
-        if self.is_paused:
-            print("Continuando a música (Resuming music).")
-            pygame.mixer.music.unpause()
-            self.is_paused = False
+        if self.is_playing:
+            if self.is_paused:
+                print("Continuando a música (Resuming music).")
+                pygame.mixer.music.unpause()
+                self.is_paused = False
+            else:
+                print("Pausando a música (Pausing music).")
+                pygame.mixer.music.pause()
+                self.is_paused = True
         else:
-            print("Pausando a música (Pausing music).")
-            pygame.mixer.music.pause()
-            self.is_paused = True
+            # PT: Se não está tocando, mas temos uma música carregada, toca de novo.
+            # EN: If not playing, but we have a loaded song, play it again.
+            if self.current_song:
+                self.play(self.current_song)
 
     def set_volume(self, level):
         """
