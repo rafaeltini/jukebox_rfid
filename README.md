@@ -62,8 +62,24 @@ Conecte o leitor ao Raspberry Pi usando os seguintes pinos GPIO:
 
 **Importante:** A biblioteca RFID usada neste projeto não utiliza o pino `RST`. Ele pode ser deixado desconectado.
 
-#### Nota sobre o Waveshare HiFi HAT
-Este projeto usa o `pygame.mixer` para controlar o áudio, que por sua vez usa o sistema ALSA no Linux. O controle de volume na interface web **não** usa `amixer` e deve funcionar com qualquer dispositivo de saída padrão. Se você precisar de controle de volume via linha de comando, pode precisar identificar o nome do controle do seu HAT com o comando `amixer` e ajustar os scripts conforme necessário.
+#### Opcional: Configuração do Waveshare WM8960 Audio HAT
+
+Se você estiver usando o **WM8960 Audio HAT** para uma qualidade de áudio superior, ele precisa de um driver específico para funcionar.
+
+1.  **Instale o Driver do HAT:** No terminal do seu Raspberry Pi, execute os seguintes comandos para baixar e instalar o driver da Waveshare.
+    ```bash
+    git clone https://github.com/waveshare/WM8960-Audio-HAT.git
+    cd WM8960-Audio-HAT
+    sudo ./install.sh
+    ```
+2.  **Reinicie o Pi:** Após a instalação, o sistema precisa ser reiniciado para que o novo driver de áudio seja carregado.
+    ```bash
+    sudo reboot
+    ```
+3.  **Verificação (Opcional):** Após reiniciar, você pode verificar se a nova placa de som foi detectada com o comando `aplay -l`. Você deverá ver um dispositivo chamado `wm8960-soundcard`.
+4.  **Controle de Volume:** O volume do HAT pode ser controlado pelo sistema usando o `alsamixer`. A interface web deste projeto controlará o volume da aplicação (`pygame`), que por sua vez usa o dispositivo de som padrão do sistema (que agora será o HAT).
+
+**Nota Importante:** As instruções de instalação do driver podem variar dependendo da sua versão do Kernel ou do Raspberry Pi OS. Se encontrar problemas, consulte a [wiki oficial da Waveshare](https://www.waveshare.com/wiki/WM8960_Audio_HAT) para obter informações de troubleshooting e compatibilidade.
 
 ### 🚀 Guia de Instalação Completo
 
@@ -205,8 +221,24 @@ Connect the reader to the Raspberry Pi using the following GPIO pins:
 
 **Important:** The RFID library used in this project does not utilize the `RST` pin. It can be left disconnected.
 
-#### Note on the Waveshare HiFi HAT
-This project uses `pygame.mixer` to control audio, which in turn uses the ALSA system on Linux. The volume control in the web interface does **not** use `amixer` and should work with any standard output device. If you need command-line volume control, you may need to identify your HAT's mixer control name with the `amixer` command and adjust scripts accordingly.
+#### Optional: Waveshare WM8960 Audio HAT Setup
+
+If you are using the **WM8960 Audio HAT** for superior audio quality, it requires a specific driver to function.
+
+1.  **Install the HAT Driver:** In your Raspberry Pi terminal, run the following commands to download and install the Waveshare driver.
+    ```bash
+    git clone https://github.com/waveshare/WM8960-Audio-HAT.git
+    cd WM8960-Audio-HAT
+    sudo ./install.sh
+    ```
+2.  **Reboot the Pi:** After the installation, the system must be rebooted for the new audio driver to be loaded.
+    ```bash
+    sudo reboot
+    ```
+3.  **Verification (Optional):** After rebooting, you can check if the new sound card was detected with the command `aplay -l`. You should see a device named `wm8960-soundcard`.
+4.  **Volume Control:** The HAT's system volume can be controlled using `alsamixer`. This project's web interface will control the application volume (`pygame`), which in turn uses the system's default sound device (which will now be the HAT).
+
+**Important Note:** The driver installation instructions may vary depending on your Kernel or Raspberry Pi OS version. If you encounter issues, please refer to the [official Waveshare wiki](https://www.waveshare.com/wiki/WM8960_Audio_HAT) for troubleshooting and compatibility information.
 
 ### 🚀 Complete Installation Guide
 
