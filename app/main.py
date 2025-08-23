@@ -5,6 +5,9 @@ from flask_socketio import SocketIO
 import os
 import threading
 import json
+import socket
+import atexit
+from zeroconf import ServiceInfo, Zeroconf
 from app.player import Player
 from app.rfid import RFIDReader
 
@@ -32,6 +35,52 @@ assignment_state = {
     "pending_file": None,
     "lock": threading.Lock()
 }
+
+# --- Funções de Descoberta de Rede (mDNS) / Network Discovery (mDNS) Functions ---
+
+def get_local_ip():
+    """
+    PT: Tenta descobrir o endereço IP local da máquina na rede.
+    EN: Tries to discover the local IP address of the machine on the network.
+    """
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+    except Exception as e:
+        print(f"Não foi possível obter o IP local automaticamente: {e} / Could not get local IP automatically: {e}")
+        ip = "127.0.0.1"
+    finally:
+        s.close()
+    return ip
+
+def register_mdns_service():
+    """
+    PT: Registra o serviço da Jukebox na rede local usando mDNS (Bonjour/Avahi).
+    EN: Registers the Jukebox service on the local network using mDNS (Bonjour/Avahi).
+    """
+    service_name = "rfidbox"
+    service_type = "_http._tcp.local."
+    port = 5000
+    server_name = f"{service_name}.local."
+
+    try:
+        ip_address = get_local_ip()
+        info = ServiceInfo(
+            service_type,
+            f"{service_name}.{service_type}",
+            addresses=[socket.inet_aton(ip_address)],
+            port=port,
+            properties={'path': '/'},
+            server=server_name,
+        )
+        zeroconf = Zeroconf()
+        print(f"Registrando serviço mDNS: {service_name} em {ip_address}:{port} / Registering mDNS service: {service_name} at {ip_address}:{port}")
+        zeroconf.register_service(info)
+        atexit.register(zeroconf.close)
+    except Exception as e:
+        print(f"Erro ao registrar o serviço mDNS: {e} / Error registering mDNS service: {e}")
+
 
 # --- Funções de Cache e Lógica da Jukebox / Cache and Jukebox Logic Functions ---
 
@@ -204,6 +253,12 @@ if __name__ == '__main__':
     # EN: Loads existing tags into the cache
     load_tags_to_cache()
 
+    # PT: Inicia o serviço de descoberta mDNS. Isso não precisa de uma thread separada
+    #     pois o atexit.register cuida do fechamento. A biblioteca roda em seus próprios daemons.
+    # EN: Starts the mDNS discovery service. This doesn't need a separate thread
+    #     as atexit.register handles the cleanup. The library runs in its own daemons.
+    register_mdns_service()
+
     # PT: Inicia a thread do leitor RFID em modo daemon
     # EN: Starts the RFID reader thread in daemon mode
     listener_thread = threading.Thread(target=rfid_listener, daemon=True)
@@ -212,4 +267,5 @@ if __name__ == '__main__':
     # PT: Executa o servidor com suporte a WebSockets
     # EN: Runs the server with WebSocket support
     print("Iniciando servidor Web... / Starting web server...")
+    print("Acesse a Jukebox em http://rfidbox.local:5000 ou http://<seu_ip>:5000")
     socketio.run(app, host='0.0.0.0', port=5000, debug=False)
